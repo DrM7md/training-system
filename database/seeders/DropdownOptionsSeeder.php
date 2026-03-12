@@ -18,10 +18,10 @@ class DropdownOptionsSeeder extends Seeder
             ['category' => 'group_statuses', 'value' => 'postponed', 'label' => 'مؤجل', 'sort_order' => 5, 'is_active' => true],
 
             // أنواع البرامج
-            ['category' => 'program_types', 'value' => 'training', 'label' => 'تدريبي', 'sort_order' => 1, 'is_active' => true],
-            ['category' => 'program_types', 'value' => 'workshop', 'label' => 'ورشة عمل', 'sort_order' => 2, 'is_active' => true],
-            ['category' => 'program_types', 'value' => 'seminar', 'label' => 'ندوة', 'sort_order' => 3, 'is_active' => true],
-            ['category' => 'program_types', 'value' => 'lecture', 'label' => 'محاضرة', 'sort_order' => 4, 'is_active' => true],
+            ['category' => 'program_types', 'value' => 'تأهيل', 'label' => 'تأهيل', 'sort_order' => 1, 'is_active' => true],
+            ['category' => 'program_types', 'value' => 'ترخيص', 'label' => 'ترخيص', 'sort_order' => 2, 'is_active' => true],
+            ['category' => 'program_types', 'value' => 'تطوير', 'label' => 'تطوير', 'sort_order' => 3, 'is_active' => true],
+            ['category' => 'program_types', 'value' => 'أخرى', 'label' => 'أخرى', 'sort_order' => 4, 'is_active' => true],
 
             // قاعات الاجتماعات
             ['category' => 'meeting_halls', 'value' => 'main_hall', 'label' => 'القاعة الرئيسية', 'sort_order' => 1, 'is_active' => true],
