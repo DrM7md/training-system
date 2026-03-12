@@ -17,9 +17,12 @@ use App\Http\Controllers\TrainerController;
 use App\Http\Controllers\TrainingHallController;
 use App\Http\Controllers\MeetingBookingController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\ImportController;
 use App\Exports\ProgramsExport;
 use App\Exports\PackagesExport;
 use App\Exports\GroupsExport;
+use App\Exports\TrainersExport;
+use App\Exports\TrainersTemplateExport;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Route;
 
@@ -69,6 +72,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('export/programs', fn() => Excel::download(new ProgramsExport, 'البرامج_التدريبية.xlsx'))->name('export.programs');
     Route::get('export/packages', fn() => Excel::download(new PackagesExport, 'الحقائب_التدريبية.xlsx'))->name('export.packages');
     Route::get('export/groups', fn() => Excel::download(new GroupsExport, 'المجموعات.xlsx'))->name('export.groups');
+    Route::get('export/trainers', fn() => Excel::download(new TrainersExport, 'المدربين.xlsx'))->name('export.trainers');
+    Route::get('export/trainers-template', fn() => Excel::download(new TrainersTemplateExport, 'قالب_استيراد_المدربين.xlsx'))->name('export.trainers-template');
+    Route::post('import/trainers', [ImportController::class, 'trainers'])->name('import.trainers');
 
     Route::get('settings', [SettingController::class, 'index'])->name('settings.index');
     Route::post('settings', [SettingController::class, 'update'])->name('settings.update');

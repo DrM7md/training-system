@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Trainer;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -15,7 +16,7 @@ class TrainerController extends Controller
             ->when($request->gender, fn($q, $g) => $q->where('gender', $g))
             ->when($request->is_internal !== null, fn($q) => $q->where('is_internal', $request->is_internal))
             ->orderBy('name')
-            ->paginate(10)
+            ->paginate(20)
             ->withQueryString();
 
         return Inertia::render('Trainers/Index', [
@@ -28,14 +29,34 @@ class TrainerController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'national_id' => 'nullable|string|max:50',
+            'employee_id' => 'nullable|string|max:50',
             'email' => 'nullable|email|max:255|unique:trainers,email',
             'phone' => 'nullable|string|max:20',
             'gender' => 'required|in:male,female',
+            'nationality' => 'nullable|string|max:100',
+            'employer_type' => 'nullable|string|max:50',
+            'employer' => 'nullable|string|max:255',
+            'job_title' => 'nullable|string|max:255',
+            'education_level' => 'nullable|string|max:100',
+            'academic_specialization' => 'nullable|string|max:255',
             'specialization' => 'nullable|string|max:255',
             'bio' => 'nullable|string',
+            'training_experience_years' => 'nullable|integer|min:0',
+            'is_certified_trainer' => 'boolean',
+            'can_prepare_packages' => 'boolean',
+            'training_fields' => 'nullable|string',
+            'training_gender' => 'nullable|string|max:50',
+            'trainer_evaluation' => 'nullable|string',
+            'cooperation_status' => 'nullable|string|max:100',
             'is_internal' => 'boolean',
             'is_active' => 'boolean',
+            'notes' => 'nullable|string',
         ]);
+
+        if (!empty($validated['training_experience_years'])) {
+            $validated['experience_base_date'] = Carbon::now()->toDateString();
+        }
 
         Trainer::create($validated);
 
@@ -81,14 +102,34 @@ class TrainerController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'national_id' => 'nullable|string|max:50',
+            'employee_id' => 'nullable|string|max:50',
             'email' => 'nullable|email|max:255|unique:trainers,email,' . $trainer->id,
             'phone' => 'nullable|string|max:20',
             'gender' => 'required|in:male,female',
+            'nationality' => 'nullable|string|max:100',
+            'employer_type' => 'nullable|string|max:50',
+            'employer' => 'nullable|string|max:255',
+            'job_title' => 'nullable|string|max:255',
+            'education_level' => 'nullable|string|max:100',
+            'academic_specialization' => 'nullable|string|max:255',
             'specialization' => 'nullable|string|max:255',
             'bio' => 'nullable|string',
+            'training_experience_years' => 'nullable|integer|min:0',
+            'is_certified_trainer' => 'boolean',
+            'can_prepare_packages' => 'boolean',
+            'training_fields' => 'nullable|string',
+            'training_gender' => 'nullable|string|max:50',
+            'trainer_evaluation' => 'nullable|string',
+            'cooperation_status' => 'nullable|string|max:100',
             'is_internal' => 'boolean',
             'is_active' => 'boolean',
+            'notes' => 'nullable|string',
         ]);
+
+        if (isset($validated['training_experience_years']) && !$trainer->experience_base_date) {
+            $validated['experience_base_date'] = Carbon::now()->toDateString();
+        }
 
         $trainer->update($validated);
 
