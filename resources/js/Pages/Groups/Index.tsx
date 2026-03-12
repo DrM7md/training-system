@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Components/Layout/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
-import { Plus, Edit2, Trash2, Eye, Search, Layers, X } from 'lucide-react';
+import { Plus, Edit2, Trash2, Eye, Search, Layers, X, Download } from 'lucide-react';
 import Card from '@/Components/UI/Card';
 import Button from '@/Components/UI/Button';
 import Badge from '@/Components/UI/Badge';
@@ -188,9 +188,15 @@ export default function Index({ groups, packages, trainers, halls, bookedHallIds
                 title="المجموعات التدريبية"
                 description="إدارة المجموعات وتعيين المتدربين"
                 action={
-                    <Button icon={<Plus className="h-4 w-4" />} onClick={() => setShowForm(true)}>
-                        إضافة مجموعة
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <a href={route('export.groups')} className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-colors">
+                            <Download className="h-4 w-4" />
+                            تصدير Excel
+                        </a>
+                        <Button icon={<Plus className="h-4 w-4" />} onClick={() => setShowForm(true)}>
+                            إضافة مجموعة
+                        </Button>
+                    </div>
                 }
             />
 

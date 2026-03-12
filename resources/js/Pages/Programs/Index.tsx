@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Components/Layout/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
-import { Plus, Edit2, Trash2, Eye, BookOpen, Search, Target, Clock, X, Archive, RotateCcw } from 'lucide-react';
+import { Plus, Edit2, Trash2, Eye, BookOpen, Search, Target, Clock, X, Archive, RotateCcw, Download } from 'lucide-react';
 import Card from '@/Components/UI/Card';
 import Button from '@/Components/UI/Button';
 import Badge from '@/Components/UI/Badge';
@@ -152,9 +152,15 @@ export default function Index({ programs, academicYears, supervisors, currentYea
                 title="البرامج التدريبية"
                 description={currentYear ? `العام الدراسي: ${currentYear.name}` : undefined}
                 action={
-                    <Button icon={<Plus className="h-4 w-4" />} onClick={() => setShowForm(true)}>
-                        إضافة برنامج
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <a href={route('export.programs')} className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-colors">
+                            <Download className="h-4 w-4" />
+                            تصدير Excel
+                        </a>
+                        <Button icon={<Plus className="h-4 w-4" />} onClick={() => setShowForm(true)}>
+                            إضافة برنامج
+                        </Button>
+                    </div>
                 }
             />
 

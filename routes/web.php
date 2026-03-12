@@ -17,6 +17,10 @@ use App\Http\Controllers\TrainerController;
 use App\Http\Controllers\TrainingHallController;
 use App\Http\Controllers\MeetingBookingController;
 use App\Http\Controllers\UserController;
+use App\Exports\ProgramsExport;
+use App\Exports\PackagesExport;
+use App\Exports\GroupsExport;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -61,6 +65,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('roles', RoleController::class)->except(['create', 'edit', 'show']);
 
     Route::resource('meeting-bookings', MeetingBookingController::class)->except(['create', 'edit', 'show']);
+
+    Route::get('export/programs', fn() => Excel::download(new ProgramsExport, 'البرامج_التدريبية.xlsx'))->name('export.programs');
+    Route::get('export/packages', fn() => Excel::download(new PackagesExport, 'الحقائب_التدريبية.xlsx'))->name('export.packages');
+    Route::get('export/groups', fn() => Excel::download(new GroupsExport, 'المجموعات.xlsx'))->name('export.groups');
 
     Route::get('settings', [SettingController::class, 'index'])->name('settings.index');
     Route::post('settings', [SettingController::class, 'update'])->name('settings.update');
