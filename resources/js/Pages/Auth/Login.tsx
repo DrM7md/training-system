@@ -35,7 +35,7 @@ export default function Login({
                             <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 shadow-lg shadow-blue-500/30 mb-5">
                                 <GraduationCap className="h-8 w-8 text-white" />
                             </div>
-                            <h1 className="text-2xl font-bold text-slate-800">نظام إدارة التدريب</h1>
+                            <h1 className="text-2xl font-bold text-slate-800">نظام مركز التدريب والتطوير</h1>
                             <p className="text-slate-500 mt-2 text-sm">سجّل دخولك للوصول إلى لوحة التحكم</p>
                         </div>
 
@@ -135,24 +135,10 @@ export default function Login({
                         <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-white/10 backdrop-blur-sm mb-8">
                             <GraduationCap className="h-10 w-10 text-white" />
                         </div>
-                        <h2 className="text-3xl font-bold mb-4">مرحباً بك في نظام إدارة التدريب</h2>
+                        <h2 className="text-3xl font-bold mb-4">مرحباً بك في نظام مركز التدريب والتطوير</h2>
                         <p className="text-blue-100 text-lg leading-relaxed">
                             نظام متكامل لإدارة البرامج التدريبية والحقائب والمجموعات وجدولة القاعات
                         </p>
-                        <div className="mt-10 grid grid-cols-3 gap-4">
-                            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
-                                <div className="text-2xl font-bold">+50</div>
-                                <div className="text-sm text-blue-200 mt-1">برنامج تدريبي</div>
-                            </div>
-                            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
-                                <div className="text-2xl font-bold">+30</div>
-                                <div className="text-sm text-blue-200 mt-1">قاعة تدريبية</div>
-                            </div>
-                            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
-                                <div className="text-2xl font-bold">+100</div>
-                                <div className="text-sm text-blue-200 mt-1">مجموعة نشطة</div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
