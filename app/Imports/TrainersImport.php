@@ -7,6 +7,14 @@ use Carbon\Carbon;
 
 class TrainersImport extends BaseImport
 {
+    // ترتيب الأعمدة في القالب:
+    // 0=مسلسل, 1=الجنس, 2=الرقم الشخصي, 3=الرقم الوظيفي, 4=الاسم,
+    // 5=الجنسية, 6=نوع جهة العمل, 7=جهة العمل, 8=المسمى الوظيفي,
+    // 9=المستوى العلمي, 10=التخصص العلمي, 11=سنوات الخبرة,
+    // 12=شهادة مدرب معتمد, 13=إعداد الحقائب, 14=مجالات التدريب,
+    // 15=جنس التدريب, 16=تقييم المدرب, 17=حالة التعاون,
+    // 18=رقم الجوال, 19=البريد الإلكتروني, 20=ملاحظات
+
     protected function getModel(): string
     {
         return Trainer::class;
@@ -14,56 +22,52 @@ class TrainersImport extends BaseImport
 
     protected function processRow(array $row, int $rowNumber): ?array
     {
-        $name = trim($row['الاسم'] ?? $row['name'] ?? '');
+        $name = trim($row[4] ?? '');
         if (empty($name)) {
-            $this->errors[] = "صف {$rowNumber}: الاسم مطلوب";
+            $this->errors[] = "صف {$rowNumber}: الاسم مطلوب (العمود 5)";
             return null;
         }
 
-        $genderRaw = trim($row['الجنس'] ?? $row['gender'] ?? '');
-        $gender = $this->mapGender($genderRaw);
-
-        $experienceYears = (int) ($row['سنوات_الخبرة_في_التدريب'] ?? $row['سنوات الخبرة في التدريب'] ?? 0);
-        $isCertified = $this->mapCheckbox($row['شهادة_مدرب_معتمد'] ?? $row['شهادة مدرب معتمد'] ?? '');
-        $canPrepare = $this->mapCheckbox($row['اعداد_الحقائب_التدريبية'] ?? $row['إعداد الحقائب التدريبية'] ?? '');
-
-        $trainingGenderRaw = trim($row['جنس_التدريب'] ?? $row['جنس التدريب'] ?? '');
-        $trainingGender = $this->mapTrainingGender($trainingGenderRaw);
-
-        $employerType = trim($row['نوع_جهة_العمل'] ?? $row['نوع جهة العمل'] ?? '');
+        $gender = $this->mapGender(trim($row[1] ?? ''));
+        $experienceYears = (int) ($row[11] ?? 0);
+        $isCertified = $this->mapCheckbox($row[12] ?? '');
+        $canPrepare = $this->mapCheckbox($row[13] ?? '');
+        $trainingGender = $this->mapTrainingGender(trim($row[15] ?? ''));
+        $employerType = trim($row[6] ?? '');
         $isInternal = mb_strpos($employerType, 'داخلي') !== false;
+        $email = trim($row[19] ?? '');
 
         return [
             'name' => $name,
             'gender' => $gender,
-            'national_id' => trim($row['الرقم_الشخصي'] ?? $row['الرقم الشخصي'] ?? ''),
-            'employee_id' => trim($row['الرقم_الوظيفي'] ?? $row['الرقم الوظيفي'] ?? ''),
-            'nationality' => trim($row['الجنسية'] ?? $row['nationality'] ?? ''),
+            'national_id' => trim($row[2] ?? '') ?: null,
+            'employee_id' => trim($row[3] ?? '') ?: null,
+            'nationality' => trim($row[5] ?? '') ?: null,
             'employer_type' => $employerType ?: null,
             'is_internal' => $isInternal,
-            'employer' => trim($row['جهة_العمل'] ?? $row['جهة العمل'] ?? ''),
-            'job_title' => trim($row['المسمى_الوظيفي'] ?? $row['المسمى الوظيفي'] ?? ''),
-            'education_level' => trim($row['المستوى_العلمي'] ?? $row['المستوى العلمي'] ?? ''),
-            'academic_specialization' => trim($row['التخصص_العلمي'] ?? $row['التخصص العلمي'] ?? ''),
-            'specialization' => trim($row['التخصص_العلمي'] ?? $row['التخصص العلمي'] ?? ''),
+            'employer' => trim($row[7] ?? '') ?: null,
+            'job_title' => trim($row[8] ?? '') ?: null,
+            'education_level' => trim($row[9] ?? '') ?: null,
+            'academic_specialization' => trim($row[10] ?? '') ?: null,
+            'specialization' => trim($row[10] ?? '') ?: null,
             'training_experience_years' => $experienceYears,
             'experience_base_date' => $experienceYears > 0 ? Carbon::now()->toDateString() : null,
             'is_certified_trainer' => $isCertified,
             'can_prepare_packages' => $canPrepare,
-            'training_fields' => trim($row['مجالات_التدريب_واعداد_الحقائب'] ?? $row['مجالات التدريب وإعداد الحقائب'] ?? ''),
+            'training_fields' => trim($row[14] ?? '') ?: null,
             'training_gender' => $trainingGender,
-            'trainer_evaluation' => trim($row['تقييم_المدرب'] ?? $row['تقييم المدرب'] ?? ''),
-            'cooperation_status' => trim($row['حالة_التعاون'] ?? $row['حالة التعاون'] ?? ''),
-            'phone' => trim($row['رقم_الجوال'] ?? $row['رقم الجوال'] ?? ''),
-            'email' => trim($row['البريد_الالكتروني'] ?? $row['البريد الإلكتروني'] ?? '') ?: null,
-            'notes' => trim($row['ملاحظات'] ?? $row['notes'] ?? ''),
+            'trainer_evaluation' => trim($row[16] ?? '') ?: null,
+            'cooperation_status' => trim($row[17] ?? '') ?: null,
+            'phone' => trim($row[18] ?? '') ?: null,
+            'email' => $email ?: null,
+            'notes' => trim($row[20] ?? '') ?: null,
             'is_active' => true,
         ];
     }
 
     private function mapGender(string $value): string
     {
-        $value = mb_strtolower(trim($value));
+        $value = trim($value);
         if (in_array($value, ['ذكر', 'male', 'م', 'رجل'])) {
             return 'male';
         }

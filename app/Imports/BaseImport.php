@@ -3,12 +3,12 @@
 namespace App\Imports;
 
 use Maatwebsite\Excel\Concerns\ToCollection;
-use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Maatwebsite\Excel\Concerns\WithStartRow;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
 use Illuminate\Support\Collection;
 
-abstract class BaseImport implements ToCollection, WithHeadingRow, WithChunkReading, SkipsEmptyRows
+abstract class BaseImport implements ToCollection, WithStartRow, WithChunkReading, SkipsEmptyRows
 {
     protected array $errors = [];
     protected int $importedCount = 0;
@@ -16,6 +16,11 @@ abstract class BaseImport implements ToCollection, WithHeadingRow, WithChunkRead
 
     abstract protected function processRow(array $row, int $rowNumber): ?array;
     abstract protected function getModel(): string;
+
+    public function startRow(): int
+    {
+        return 2; // تخطي صف العناوين
+    }
 
     public function collection(Collection $rows)
     {
