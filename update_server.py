@@ -9,6 +9,7 @@ project_dir = '/home/u229998316/domains/kbinhschool.com/public_html/TrainingWeb'
 commands = [
     f'cd {project_dir} && git fetch origin',
     f'cd {project_dir} && git reset --hard origin/main',
+    f'cd {project_dir} && composer install --no-dev --optimize-autoloader 2>&1 | tail -15',
     f'cd {project_dir} && php artisan config:cache 2>&1',
     f'cd {project_dir} && php artisan route:cache 2>&1',
     f'cd {project_dir} && php artisan view:cache 2>&1',
