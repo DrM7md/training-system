@@ -66,7 +66,7 @@ class DashboardController extends Controller
                 'group' => $session->programGroup?->name ?? '-',
                 'hall' => $session->trainingHall?->name ?? '-',
                 'date' => $session->date->format('Y-m-d'),
-                'day_name' => $session->date->translatedFormat('l'),
+                'day_name' => $session->date->locale('ar')->dayName,
             ]);
 
         $recentPrograms = Program::with('supervisor')

@@ -131,7 +131,7 @@ export default function Dashboard({
                     <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-xl border border-slate-200">
                         <Clock className="h-4 w-4 text-slate-400" />
                         <span className="text-sm text-slate-600 font-medium">
-                            {new Date().toLocaleDateString('ar-SA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                            {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                         </span>
                     </div>
                 </div>
