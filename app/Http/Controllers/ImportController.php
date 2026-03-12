@@ -12,17 +12,26 @@ class ImportController extends Controller
     {
         $request->validate([
             'file' => 'required|mimes:xlsx,xls,csv|max:10240',
+            'mode' => 'required|in:skip,update',
         ]);
 
-        $import = new TrainersImport();
+        $import = new TrainersImport($request->input('mode', 'skip'));
         Excel::import($import, $request->file('file'));
 
         $summary = $import->getSummary();
 
-        $message = "تم استيراد {$summary['imported']} مدرب بنجاح";
-        if ($summary['skipped'] > 0) {
-            $message .= " وتم تخطي {$summary['skipped']} صف";
+        $parts = [];
+        if ($summary['imported'] > 0) {
+            $parts[] = "تم إضافة {$summary['imported']} مدرب جديد";
         }
+        if ($summary['updated'] > 0) {
+            $parts[] = "تم تحديث {$summary['updated']} مدرب";
+        }
+        if ($summary['skipped'] > 0) {
+            $parts[] = "تم تخطي {$summary['skipped']} صف";
+        }
+
+        $message = implode('، ', $parts) ?: 'لم يتم استيراد أي بيانات';
 
         if (!empty($summary['errors'])) {
             return back()->with('warning', $message)->with('import_errors', $summary['errors']);

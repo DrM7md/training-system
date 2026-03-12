@@ -7,6 +7,11 @@ use Carbon\Carbon;
 
 class TrainersImport extends BaseImport
 {
+    protected function getMatchKeys(): array
+    {
+        return ['name', 'national_id'];
+    }
+
     // ترتيب الأعمدة في القالب:
     // 0=مسلسل, 1=الجنس, 2=الرقم الشخصي, 3=الرقم الوظيفي, 4=الاسم,
     // 5=الجنسية, 6=نوع جهة العمل, 7=جهة العمل, 8=المسمى الوظيفي,

@@ -101,7 +101,7 @@ export default function Index({ trainers, filters, trainer }: Props) {
     const [internalFilter, setInternalFilter] = useState(filters.is_internal || '');
 
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const importForm = useForm<{ file: File | null }>({ file: null });
+    const importForm = useForm<{ file: File | null; mode: string }>({ file: null, mode: 'skip' });
 
     const initialData = editing
         ? {
@@ -656,6 +656,52 @@ export default function Index({ trainers, filters, trainer }: Props) {
                             <li>احفظ الملف بصيغة xlsx</li>
                             <li>ارفع الملف هنا</li>
                         </ol>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">عند وجود بيانات مكررة</label>
+                        <div className="grid grid-cols-2 gap-3">
+                            <label
+                                className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                                    importForm.data.mode === 'skip'
+                                        ? 'border-teal-500 bg-teal-50'
+                                        : 'border-slate-200 hover:border-slate-300'
+                                }`}
+                            >
+                                <input
+                                    type="radio"
+                                    name="mode"
+                                    value="skip"
+                                    checked={importForm.data.mode === 'skip'}
+                                    onChange={() => importForm.setData('mode', 'skip')}
+                                    className="text-teal-600 focus:ring-teal-500"
+                                />
+                                <div>
+                                    <p className="text-sm font-semibold text-slate-800">تخطي الموجودين</p>
+                                    <p className="text-xs text-slate-500">إضافة الجدد فقط وتجاهل المكرر</p>
+                                </div>
+                            </label>
+                            <label
+                                className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                                    importForm.data.mode === 'update'
+                                        ? 'border-amber-500 bg-amber-50'
+                                        : 'border-slate-200 hover:border-slate-300'
+                                }`}
+                            >
+                                <input
+                                    type="radio"
+                                    name="mode"
+                                    value="update"
+                                    checked={importForm.data.mode === 'update'}
+                                    onChange={() => importForm.setData('mode', 'update')}
+                                    className="text-amber-600 focus:ring-amber-500"
+                                />
+                                <div>
+                                    <p className="text-sm font-semibold text-slate-800">تحديث الموجودين</p>
+                                    <p className="text-xs text-slate-500">استبدال البيانات القديمة بالجديدة</p>
+                                </div>
+                            </label>
+                        </div>
                     </div>
 
                     <div>
