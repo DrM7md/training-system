@@ -29,9 +29,10 @@ interface SchoolType {
 }
 
 interface Props {
-    schools: { data: SchoolType[]; current_page: number; last_page: number };
-    filters: { search?: string; type?: string };
+    schools: { data: SchoolType[]; current_page: number; last_page: number; links: Array<{ url: string | null; label: string; active: boolean }> };
+    filters: { search?: string; type?: string; education_level?: string };
     currentYear: string | null;
+    educationLevels: string[];
 }
 
 const typeOptions = [
@@ -44,13 +45,14 @@ const typeLabels: Record<string, string> = {
     female: 'بنات',
 };
 
-export default function Index({ schools, filters, currentYear }: Props) {
+export default function Index({ schools, filters, currentYear, educationLevels }: Props) {
     const [showForm, setShowForm] = useState(false);
     const [showImport, setShowImport] = useState(false);
     const [editing, setEditing] = useState<SchoolType | null>(null);
     const [deleting, setDeleting] = useState<SchoolType | null>(null);
     const [search, setSearch] = useState(filters.search || '');
     const [typeFilter, setTypeFilter] = useState(filters.type || '');
+    const [educationFilter, setEducationFilter] = useState(filters.education_level || '');
     const fileInputRef = useRef<HTMLInputElement>(null);
     const importForm = useForm<{ file: File | null; mode: string }>({ file: null, mode: 'skip' });
 
@@ -68,25 +70,35 @@ export default function Index({ schools, filters, currentYear }: Props) {
           }
         : { name: '', education_level: '', type: 'male', district: '', principal_name: '', phone: '', landline: '', email: '', is_active: true };
 
-    const doSearch = (s: string, t: string) => {
-        router.get(route('schools.index'), { search: s || undefined, type: t || undefined }, { preserveState: true, preserveScroll: true });
+    const doSearch = (s: string, t: string, el: string) => {
+        router.get(route('schools.index'), { search: s || undefined, type: t || undefined, education_level: el || undefined }, { preserveState: true, preserveScroll: true });
     };
 
     const [searchTimer, setSearchTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
     const handleSearchChange = (val: string) => {
         setSearch(val);
         if (searchTimer) clearTimeout(searchTimer);
-        setSearchTimer(setTimeout(() => doSearch(val, typeFilter), 400));
+        setSearchTimer(setTimeout(() => doSearch(val, typeFilter, educationFilter), 400));
     };
 
     const handleTypeChange = (val: string) => {
         setTypeFilter(val);
-        doSearch(search, val);
+        doSearch(search, val, educationFilter);
     };
 
     const clearType = () => {
         setTypeFilter('');
-        doSearch(search, '');
+        doSearch(search, '', educationFilter);
+    };
+
+    const handleEducationChange = (val: string) => {
+        setEducationFilter(val);
+        doSearch(search, typeFilter, val);
+    };
+
+    const clearEducation = () => {
+        setEducationFilter('');
+        doSearch(search, typeFilter, '');
     };
 
     const handleImportSubmit = (e: React.FormEvent) => {
@@ -148,7 +160,7 @@ export default function Index({ schools, filters, currentYear }: Props) {
                             onChange={(e) => handleTypeChange(e.target.value)}
                             className="px-4 py-2.5 pl-10 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all appearance-none"
                         >
-                            <option value="">كل الأنواع</option>
+                            <option value="">كل الفئات</option>
                             {typeOptions.map((t) => (
                                 <option key={t.value} value={t.value}>{t.label}</option>
                             ))}
@@ -163,6 +175,29 @@ export default function Index({ schools, filters, currentYear }: Props) {
                             </button>
                         )}
                     </div>
+                    {educationLevels.length > 0 && (
+                        <div className="relative">
+                            <select
+                                value={educationFilter}
+                                onChange={(e) => handleEducationChange(e.target.value)}
+                                className="px-4 py-2.5 pl-10 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all appearance-none"
+                            >
+                                <option value="">كل المراحل</option>
+                                {educationLevels.map((el) => (
+                                    <option key={el} value={el}>{el}</option>
+                                ))}
+                            </select>
+                            {educationFilter && (
+                                <button
+                                    type="button"
+                                    onClick={clearEducation}
+                                    className="absolute left-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors"
+                                >
+                                    <X className="h-4 w-4" />
+                                </button>
+                            )}
+                        </div>
+                    )}
                     <Badge variant="default">{schools.data.length} مدرسة</Badge>
                 </div>
             </Card>
@@ -175,7 +210,6 @@ export default function Index({ schools, filters, currentYear }: Props) {
                                 <th className="px-4 py-3.5 text-right text-xs font-bold text-slate-600 uppercase tracking-wide">المدرسة</th>
                                 <th className="px-4 py-3.5 text-right text-xs font-bold text-slate-600 uppercase tracking-wide">المرحلة</th>
                                 <th className="px-4 py-3.5 text-right text-xs font-bold text-slate-600 uppercase tracking-wide">الفئة</th>
-                                <th className="px-4 py-3.5 text-right text-xs font-bold text-slate-600 uppercase tracking-wide">المنطقة</th>
                                 <th className="px-4 py-3.5 text-right text-xs font-bold text-slate-600 uppercase tracking-wide">المدير</th>
                                 <th className="px-4 py-3.5 text-right text-xs font-bold text-slate-600 uppercase tracking-wide">الجوال</th>
                                 <th className="px-4 py-3.5 text-right text-xs font-bold text-slate-600 uppercase tracking-wide">الهاتف</th>
@@ -187,7 +221,7 @@ export default function Index({ schools, filters, currentYear }: Props) {
                         <tbody className="divide-y divide-slate-100">
                             {schools.data.length === 0 ? (
                                 <tr>
-                                    <td colSpan={10} className="px-4 py-12 text-center text-slate-500">
+                                    <td colSpan={9} className="px-4 py-12 text-center text-slate-500">
                                         <School className="h-12 w-12 mx-auto text-slate-300 mb-3" />
                                         <p className="font-medium">لا توجد مدارس</p>
                                     </td>
@@ -209,7 +243,6 @@ export default function Index({ schools, filters, currentYear }: Props) {
                                                 {typeLabels[school.type] || school.type}
                                             </Badge>
                                         </td>
-                                        <td className="px-4 py-3 text-sm text-slate-600">{school.district || '-'}</td>
                                         <td className="px-4 py-3 text-sm text-slate-600">{school.principal_name || '-'}</td>
                                         <td className="px-4 py-3 text-sm text-slate-600 font-mono" dir="ltr">{school.phone || '-'}</td>
                                         <td className="px-4 py-3 text-sm text-slate-600 font-mono" dir="ltr">{school.landline || '-'}</td>
@@ -251,6 +284,28 @@ export default function Index({ schools, filters, currentYear }: Props) {
                     </table>
                 </div>
             </Card>
+
+            {schools.links && schools.links.length > 3 && (
+                <div className="mt-6 flex justify-center">
+                    <nav className="flex items-center gap-1">
+                        {schools.links.map((link, i) => (
+                            <button
+                                key={i}
+                                disabled={!link.url}
+                                onClick={() => link.url && router.get(link.url, {}, { preserveState: true, preserveScroll: true })}
+                                className={`px-3 py-2 text-sm rounded-lg transition-colors ${
+                                    link.active
+                                        ? 'bg-teal-600 text-white'
+                                        : link.url
+                                            ? 'text-slate-600 hover:bg-slate-100'
+                                            : 'text-slate-300 cursor-not-allowed'
+                                }`}
+                                dangerouslySetInnerHTML={{ __html: link.label }}
+                            />
+                        ))}
+                    </nav>
+                </div>
+            )}
 
             <FormModal
                 open={showForm}
