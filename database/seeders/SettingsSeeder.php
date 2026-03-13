@@ -16,6 +16,10 @@ class SettingsSeeder extends Seeder
             ['key' => 'training_end_time', 'value' => '14:00', 'type' => 'time', 'group' => 'training'],
             ['key' => 'organization_name', 'value' => 'مركز التدريب', 'type' => 'string', 'group' => 'general'],
             ['key' => 'organization_logo', 'value' => '', 'type' => 'string', 'group' => 'general'],
+
+            ['key' => 'payment_month_1', 'value' => '12', 'type' => 'integer', 'group' => 'payments'],
+            ['key' => 'payment_month_2', 'value' => '3', 'type' => 'integer', 'group' => 'payments'],
+            ['key' => 'payment_month_3', 'value' => '6', 'type' => 'integer', 'group' => 'payments'],
         ];
 
         foreach ($settings as $setting) {

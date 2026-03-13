@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class DropdownOption extends Model
 {
-    protected $fillable = ['category', 'value', 'label', 'sort_order', 'is_active'];
+    protected $fillable = ['category', 'value', 'label', 'rate', 'sort_order', 'is_active'];
 
     protected $casts = [
         'is_active' => 'boolean',

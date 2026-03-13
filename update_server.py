@@ -12,6 +12,7 @@ commands = [
     f'cd {project_dir} && composer install --no-dev --optimize-autoloader 2>&1 | tail -15',
     f'cd {project_dir} && php artisan migrate --force 2>&1',
     f'cd {project_dir} && php artisan db:seed --class=DropdownOptionsSeeder --force 2>&1',
+    f'cd {project_dir} && php artisan db:seed --class=SettingsSeeder --force 2>&1',
     f'cd {project_dir} && php artisan config:cache 2>&1',
     f'cd {project_dir} && php artisan route:cache 2>&1',
     f'cd {project_dir} && php artisan view:cache 2>&1',

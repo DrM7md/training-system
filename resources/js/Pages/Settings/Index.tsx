@@ -20,6 +20,7 @@ interface DropdownOption {
     category: string;
     value: string;
     label: string;
+    rate: number | null;
     sort_order: number;
     is_active: boolean;
 }
@@ -31,23 +32,29 @@ interface Props {
 
 const settingLabels: Record<string, { label: string; hint?: string }> = {
     hours_per_day: { label: 'ساعات التدريب اليومية', hint: 'عدد ساعات التدريب في اليوم الواحد' },
-
     training_start_time: { label: 'وقت بداية التدريب', hint: 'وقت بداية الجلسات التدريبية' },
     training_end_time: { label: 'وقت نهاية التدريب', hint: 'وقت نهاية الجلسات التدريبية' },
     organization_name: { label: 'اسم المؤسسة', hint: 'اسم مركز أو إدارة التدريب' },
     organization_logo: { label: 'شعار المؤسسة', hint: 'صورة شعار المؤسسة' },
+    payment_month_1: { label: 'شهر الصرف الأول', hint: 'رقم الشهر (مثلاً: 12 لديسمبر)' },
+    payment_month_2: { label: 'شهر الصرف الثاني', hint: 'رقم الشهر (مثلاً: 3 لمارس)' },
+    payment_month_3: { label: 'شهر الصرف الثالث', hint: 'رقم الشهر (مثلاً: 6 ليونيو)' },
 };
 
 const groupLabels: Record<string, { label: string; icon: React.ElementType }> = {
     training: { label: 'إعدادات التدريب', icon: Clock },
     general: { label: 'إعدادات عامة', icon: Building },
+    payments: { label: 'إعدادات الصرف', icon: Settings },
 };
 
 const categoryLabels: Record<string, string> = {
     program_types:  'أنواع البرامج',
     meeting_halls:  'قاعات الاجتماعات',
     group_statuses: 'حالات المجموعات',
+    assignment_types: 'أنواع التكليفات وقيمة الساعة',
 };
+
+const categoriesWithRate = ['assignment_types'];
 
 export default function Index({ settings, dropdownCategories }: Props) {
     const allSettings = Object.values(settings).flat();
@@ -61,7 +68,9 @@ export default function Index({ settings, dropdownCategories }: Props) {
     const [editingOption, setEditingOption] = useState<DropdownOption | null>(null);
     const [addingTo, setAddingTo] = useState<string | null>(null);
     const [newLabel, setNewLabel] = useState('');
+    const [newRate, setNewRate] = useState('');
     const [editLabel, setEditLabel] = useState('');
+    const [editRate, setEditRate] = useState('');
 
     const form = useForm({
         settings: allSettings.map((s) => ({ key: s.key, value: s.value || '' })),
@@ -128,14 +137,15 @@ export default function Index({ settings, dropdownCategories }: Props) {
     const handleAddOption = (category: string) => {
         if (!newLabel.trim()) return;
         const label = newLabel.trim();
-        router.post(route('dropdown-options.store'), {
-            category,
-            value: label,
-            label: label,
-        }, {
+        const data: Record<string, any> = { category, value: label, label };
+        if (categoriesWithRate.includes(category) && newRate) {
+            data.rate = parseFloat(newRate);
+        }
+        router.post(route('dropdown-options.store'), data, {
             preserveScroll: true,
             onSuccess: () => {
                 setNewLabel('');
+                setNewRate('');
                 setAddingTo(null);
             },
         });
@@ -144,11 +154,11 @@ export default function Index({ settings, dropdownCategories }: Props) {
     const handleUpdateOption = () => {
         if (!editingOption || !editLabel.trim()) return;
         const label = editLabel.trim();
-        router.put(route('dropdown-options.update', editingOption.id), {
-            value: label,
-            label: label,
-            is_active: editingOption.is_active,
-        }, {
+        const data: Record<string, any> = { value: label, label, is_active: editingOption.is_active };
+        if (categoriesWithRate.includes(editingOption.category)) {
+            data.rate = editRate ? parseFloat(editRate) : null;
+        }
+        router.put(route('dropdown-options.update', editingOption.id), data, {
             preserveScroll: true,
             onSuccess: () => setEditingOption(null),
         });
@@ -170,6 +180,7 @@ export default function Index({ settings, dropdownCategories }: Props) {
     const startEditing = (option: DropdownOption) => {
         setEditingOption(option);
         setEditLabel(option.label);
+        setEditRate(option.rate != null ? String(option.rate) : '');
     };
 
     return (
@@ -367,6 +378,16 @@ export default function Index({ settings, dropdownCategories }: Props) {
                                                     className="flex-1 px-2 py-1 border border-slate-200 rounded text-sm focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
                                                     onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleUpdateOption(); } }}
                                                 />
+                                                {categoriesWithRate.includes(category) && (
+                                                    <input
+                                                        type="number"
+                                                        step="0.5"
+                                                        value={editRate}
+                                                        onChange={(e) => setEditRate(e.target.value)}
+                                                        placeholder="قيمة الساعة"
+                                                        className="w-24 px-2 py-1 border border-slate-200 rounded text-sm focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
+                                                    />
+                                                )}
                                                 <button type="button" onClick={handleUpdateOption} className="p-1 rounded bg-teal-100 text-teal-600 hover:bg-teal-200 transition-colors">
                                                     <Check className="h-3.5 w-3.5" />
                                                 </button>
@@ -380,6 +401,11 @@ export default function Index({ settings, dropdownCategories }: Props) {
                                                     <span className={`text-sm truncate ${option.is_active ? 'text-slate-700 font-medium' : 'text-slate-400 line-through'}`}>
                                                         {option.label}
                                                     </span>
+                                                    {option.rate != null && (
+                                                        <span className="text-[10px] px-1.5 py-0.5 bg-teal-50 text-teal-600 rounded font-medium flex-shrink-0">
+                                                            {option.rate} ر.ق/ساعة
+                                                        </span>
+                                                    )}
                                                     {!option.is_active && (
                                                         <span className="text-[10px] px-1.5 py-0.5 bg-red-50 text-red-500 rounded font-medium">معطل</span>
                                                     )}
@@ -421,6 +447,16 @@ export default function Index({ settings, dropdownCategories }: Props) {
                                             autoFocus
                                             onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddOption(category); } }}
                                         />
+                                        {categoriesWithRate.includes(category) && (
+                                            <input
+                                                type="number"
+                                                step="0.5"
+                                                value={newRate}
+                                                onChange={(e) => setNewRate(e.target.value)}
+                                                placeholder="قيمة الساعة"
+                                                className="w-24 px-2 py-1 border border-slate-200 rounded text-sm focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
+                                            />
+                                        )}
                                         <button type="button" onClick={() => handleAddOption(category)} className="p-1 rounded bg-teal-100 text-teal-600 hover:bg-teal-200 transition-colors">
                                             <Check className="h-3.5 w-3.5" />
                                         </button>

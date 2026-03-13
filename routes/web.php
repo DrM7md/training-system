@@ -18,6 +18,7 @@ use App\Http\Controllers\TrainingHallController;
 use App\Http\Controllers\MeetingBookingController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AssignmentController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ImportController;
 use App\Exports\ProgramsExport;
 use App\Exports\PackagesExport;
@@ -71,7 +72,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('meeting-bookings', MeetingBookingController::class)->except(['create', 'edit', 'show']);
 
     Route::resource('assignments', AssignmentController::class)->except(['create', 'edit', 'show']);
-    Route::get('payments', fn() => \Inertia\Inertia::render('Payments/Index'))->name('payments.index');
+    Route::get('payments', [PaymentController::class, 'index'])->name('payments.index');
     Route::get('certificates', fn() => \Inertia\Inertia::render('Certificates/Index'))->name('certificates.index');
 
     Route::get('export/programs', fn() => Excel::download(new ProgramsExport, 'البرامج_التدريبية.xlsx'))->name('export.programs');

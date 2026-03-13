@@ -18,6 +18,7 @@ class DropdownOptionController extends Controller
             'category' => 'required|string|max:100',
             'value' => 'required|string|max:100',
             'label' => 'required|string|max:255',
+            'rate' => 'nullable|numeric|min:0',
         ]);
 
         $maxOrder = DropdownOption::where('category', $validated['category'])->max('sort_order') ?? 0;
@@ -33,6 +34,7 @@ class DropdownOptionController extends Controller
         $validated = $request->validate([
             'label' => 'required|string|max:255',
             'value' => 'required|string|max:100',
+            'rate' => 'nullable|numeric|min:0',
             'is_active' => 'boolean',
         ]);
 
