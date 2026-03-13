@@ -19,7 +19,7 @@ class TrainersImport extends BaseImport
     // 12=شهادة مدرب معتمد, 13=إعداد الحقائب, 14=مجالات التدريب,
     // 15=جنس التدريب, 16=تقييم المدرب, 17=حالة التعاون,
     // 18=رقم الجوال, 19=البريد الإلكتروني,
-    // 20=منتسبو المدارس الحكومية, 21=المسؤول المباشر, 22=ملاحظات
+    // 20=الفئة الوظيفية, 21=منتسبو المدارس الحكومية, 22=المسؤول المباشر, 23=ملاحظات
 
     protected function getModel(): string
     {
@@ -66,9 +66,10 @@ class TrainersImport extends BaseImport
             'cooperation_status' => trim($row[17] ?? '') ?: null,
             'phone' => trim($row[18] ?? '') ?: null,
             'email' => $email ?: null,
-            'is_government_employee' => $this->mapCheckbox($row[20] ?? ''),
-            'direct_manager' => trim($row[21] ?? '') ?: null,
-            'notes' => trim($row[22] ?? '') ?: null,
+            'job_category' => trim($row[20] ?? '') ?: null,
+            'is_government_employee' => $this->mapCheckbox($row[21] ?? ''),
+            'direct_manager' => trim($row[22] ?? '') ?: null,
+            'notes' => trim($row[23] ?? '') ?: null,
             'is_active' => true,
         ];
     }

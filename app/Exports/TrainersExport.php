@@ -43,6 +43,7 @@ class TrainersExport implements FromCollection, WithHeadings, WithStyles, Should
             'cooperation_status' => $t->cooperation_status ?? '-',
             'phone' => $t->phone ?? '-',
             'email' => $t->email ?? '-',
+            'job_category' => $t->job_category ?? '-',
             'is_government_employee' => $t->is_government_employee ? 'نعم' : 'لا',
             'direct_manager' => $t->direct_manager ?? '-',
             'notes' => $t->notes ?? '-',
@@ -57,14 +58,14 @@ class TrainersExport implements FromCollection, WithHeadings, WithStyles, Should
             'المستوى العلمي', 'التخصص العلمي', 'سنوات الخبرة', 'شهادة مدرب معتمد',
             'إعداد الحقائب', 'مجالات التدريب', 'جنس التدريب', 'تقييم المدرب',
             'حالة التعاون', 'رقم الجوال', 'البريد الإلكتروني',
-            'منتسبو المدارس الحكومية', 'المسؤول المباشر / المدير', 'ملاحظات',
+            'الفئة الوظيفية', 'منتسبو المدارس الحكومية', 'المسؤول المباشر / المدير', 'ملاحظات',
         ];
     }
 
     public function styles(Worksheet $sheet)
     {
         $lastRow = $sheet->getHighestRow();
-        $lastCol = 'X';
+        $lastCol = 'Y';
 
         $sheet->setRightToLeft(true);
 

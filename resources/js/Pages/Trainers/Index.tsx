@@ -608,6 +608,19 @@ export default function Index({ trainers, filters, jobCategories, trainer }: Pro
                                         <option key={g.value} value={g.value}>{g.label}</option>
                                     ))}
                                 </Select>
+                                <Select
+                                    label="الفئة الوظيفية"
+                                    value={form.data.job_category}
+                                    onChange={(e) => {
+                                        form.setData('job_category', e.target.value);
+                                        form.setData('is_government_employee', e.target.value === 'منتسبو المدارس الحكومية');
+                                    }}
+                                >
+                                    <option value="">-- اختر الفئة --</option>
+                                    {jobCategories.map((jc) => (
+                                        <option key={jc.value} value={jc.value}>{jc.label}</option>
+                                    ))}
+                                </Select>
                             </div>
                         </div>
 
@@ -681,21 +694,6 @@ export default function Index({ trainers, filters, jobCategories, trainer }: Pro
                                     error={form.errors.notes}
                                     rows={2}
                                 />
-                            </div>
-                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-4">
-                                <Select
-                                    label="الفئة الوظيفية"
-                                    value={form.data.job_category}
-                                    onChange={(e) => {
-                                        form.setData('job_category', e.target.value);
-                                        form.setData('is_government_employee', e.target.value === 'منتسبو المدارس الحكومية');
-                                    }}
-                                >
-                                    <option value="">-- اختر الفئة --</option>
-                                    {jobCategories.map((jc) => (
-                                        <option key={jc.value} value={jc.value}>{jc.label}</option>
-                                    ))}
-                                </Select>
                             </div>
                             <div className="flex items-center gap-4 mt-4">
                                 <label className="flex items-center gap-2 cursor-pointer group">
@@ -955,10 +953,12 @@ export default function Index({ trainers, filters, jobCategories, trainer }: Pro
                                     <p className="text-sm font-medium text-slate-800">{viewing.direct_manager}</p>
                                 </div>
                             )}
-                            <div className="p-3 bg-slate-50 rounded-lg">
-                                <p className="text-xs text-slate-500">الفئة الوظيفية</p>
-                                <p className="text-sm font-medium text-slate-800">{viewing.is_government_employee ? 'منتسبو المدارس الحكومية' : 'غير محدد'}</p>
-                            </div>
+                            {viewing.job_category && (
+                                <div className="p-3 bg-slate-50 rounded-lg">
+                                    <p className="text-xs text-slate-500">الفئة الوظيفية</p>
+                                    <p className="text-sm font-medium text-slate-800">{viewing.job_category}</p>
+                                </div>
+                            )}
                         </div>
 
                         {viewing.training_fields && (

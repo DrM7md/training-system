@@ -23,7 +23,7 @@ class TrainersTemplateExport implements FromArray, WithHeadings, WithStyles, Sho
                 'داخلي', 'وزارة التعليم', 'مدرب أول', 'ماجستير', 'تقنية المعلومات',
                 5, 'نعم', 'نعم', 'التدريب التقني والإداري', 'رجال ونساء',
                 '', 'متعاون', '55512345', 'ahmed@example.com',
-                'نعم', 'محمد أحمد العلي', '',
+                'منتسبو المدارس الحكومية', 'نعم', 'محمد أحمد العلي', '',
             ],
         ];
     }
@@ -51,6 +51,7 @@ class TrainersTemplateExport implements FromArray, WithHeadings, WithStyles, Sho
             'حالة التعاون',
             'رقم الجوال',
             'البريد الإلكتروني',
+            'الفئة الوظيفية',
             'منتسبو المدارس الحكومية',
             'المسؤول المباشر / المدير',
             'ملاحظات',
@@ -59,7 +60,7 @@ class TrainersTemplateExport implements FromArray, WithHeadings, WithStyles, Sho
 
     public function styles(Worksheet $sheet)
     {
-        $lastCol = 'W';
+        $lastCol = 'X';
 
         $sheet->setRightToLeft(true);
 
@@ -113,9 +114,18 @@ class TrainersTemplateExport implements FromArray, WithHeadings, WithStyles, Sho
             $sheet->getCell("N{$i}")->setDataValidation(clone $yesNoValidation);
         }
 
-        // Data validation for منتسبو المدارس الحكومية (column U)
+        // Data validation for الفئة الوظيفية (column U)
+        $jobCategoryValidation = new DataValidation();
+        $jobCategoryValidation->setType(DataValidation::TYPE_LIST);
+        $jobCategoryValidation->setAllowBlank(true);
+        $jobCategoryValidation->setFormula1('"منتسبو المدارس الحكومية,منتسبو وزارة التربية والتعليم,منتسبو المدارس الخاصة,منتسبو الجهات الخارجية,غير منتسب لجهة عمل,أخرى"');
         for ($i = 3; $i <= 500; $i++) {
-            $sheet->getCell("U{$i}")->setDataValidation(clone $yesNoValidation);
+            $sheet->getCell("U{$i}")->setDataValidation(clone $jobCategoryValidation);
+        }
+
+        // Data validation for منتسبو المدارس الحكومية (column V)
+        for ($i = 3; $i <= 500; $i++) {
+            $sheet->getCell("V{$i}")->setDataValidation(clone $yesNoValidation);
         }
 
         // Data validation for جنس التدريب (column P)
@@ -129,8 +139,9 @@ class TrainersTemplateExport implements FromArray, WithHeadings, WithStyles, Sho
 
         // Set column widths for text fields
         $sheet->getColumnDimension('O')->setWidth(35); // مجالات التدريب
-        $sheet->getColumnDimension('V')->setWidth(25); // المسؤول المباشر
-        $sheet->getColumnDimension('W')->setWidth(25); // ملاحظات
+        $sheet->getColumnDimension('U')->setWidth(30); // الفئة الوظيفية
+        $sheet->getColumnDimension('W')->setWidth(25); // المسؤول المباشر
+        $sheet->getColumnDimension('X')->setWidth(25); // ملاحظات
 
         return [];
     }
