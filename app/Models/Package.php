@@ -24,4 +24,9 @@ class Package extends Model
     {
         return $this->hasMany(ProgramGroup::class);
     }
+
+    public function groups(): HasMany
+    {
+        return $this->hasMany(ProgramGroup::class);
+    }
 }
