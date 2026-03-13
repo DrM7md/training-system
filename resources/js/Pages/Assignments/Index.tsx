@@ -287,9 +287,9 @@ export default function Index({ assignments, trainers, programs, assignmentTypes
                                         </td>
                                         <td className="px-4 py-3">
                                             <div className="flex items-center justify-center gap-1">
-                                                <button title="طباعة" className="p-2 rounded-lg hover:bg-purple-100 text-purple-600 transition-colors">
+                                                <a href={route('assignments.show', a.id)} target="_blank" title="طباعة" className="p-2 rounded-lg hover:bg-purple-100 text-purple-600 transition-colors">
                                                     <Printer className="h-4 w-4" />
-                                                </button>
+                                                </a>
                                                 <button onClick={() => openEditForm(a)} className="p-2 rounded-lg hover:bg-teal-100 text-teal-600 transition-colors">
                                                     <Edit2 className="h-4 w-4" />
                                                 </button>

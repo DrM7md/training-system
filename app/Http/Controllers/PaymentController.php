@@ -85,6 +85,8 @@ class PaymentController extends Controller
             'paymentMonths' => $paymentMonths,
             'filters' => $request->only(['date_from', 'date_to', 'assignment_type', 'payment_date']),
             'grandTotal' => collect($paymentData)->sum('total_payment'),
+            'organizationName' => Setting::get('organization_name', 'مركز التدريب والتطوير'),
+            'organizationLogo' => Setting::get('organization_logo', ''),
         ]);
     }
 }

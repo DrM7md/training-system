@@ -7,6 +7,7 @@ use App\Models\DropdownOption;
 use App\Models\Package;
 use App\Models\Program;
 use App\Models\ProgramGroup;
+use App\Models\Setting;
 use App\Models\Trainer;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -101,6 +102,17 @@ class AssignmentController extends Controller
         $assignment->groups()->sync($validated['group_ids']);
 
         return back()->with('success', 'تم تحديث التكليف بنجاح');
+    }
+
+    public function show(Assignment $assignment)
+    {
+        $assignment->load(['trainer', 'program', 'package', 'groups']);
+
+        return Inertia::render('Assignments/Print', [
+            'assignment' => $assignment,
+            'organizationName' => Setting::get('organization_name', 'مركز التدريب والتطوير'),
+            'organizationLogo' => Setting::get('organization_logo', ''),
+        ]);
     }
 
     public function destroy(Assignment $assignment)

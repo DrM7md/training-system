@@ -71,7 +71,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::resource('meeting-bookings', MeetingBookingController::class)->except(['create', 'edit', 'show']);
 
-    Route::resource('assignments', AssignmentController::class)->except(['create', 'edit', 'show']);
+    Route::resource('assignments', AssignmentController::class)->except(['create', 'edit']);
     Route::get('payments', [PaymentController::class, 'index'])->name('payments.index');
     Route::get('certificates', fn() => \Inertia\Inertia::render('Certificates/Index'))->name('certificates.index');
 
