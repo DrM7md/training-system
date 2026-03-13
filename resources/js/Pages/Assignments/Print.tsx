@@ -7,6 +7,7 @@ interface Trainer {
     national_id: string | null;
     employee_id: string | null;
     employer: string | null;
+    direct_manager: string | null;
 }
 
 interface Assignment {
@@ -27,54 +28,122 @@ interface Props {
     organizationLogo: string;
 }
 
+const COLORS = {
+    primary: 'rgb(26, 54, 93)',
+    accent1: 'rgb(137, 20, 60)',
+    accent2: 'rgb(15, 66, 96)',
+    accent3: 'rgb(18, 155, 130)',
+    accent4: 'rgb(65, 148, 179)',
+    accent5: 'rgb(162, 145, 96)',
+    border: '#c7d2de',
+    headerBg: '#edf2f7',
+    text: '#1a202c',
+    textLight: '#4a5568',
+    textMuted: '#718096',
+};
+
 export default function Print({ assignment, organizationName, organizationLogo }: Readonly<Props>) {
     useEffect(() => {
         setTimeout(() => window.print(), 500);
     }, []);
 
     const a = assignment;
-    const cellStyle = { border: '1.5px solid #94a3b8', padding: '8px 12px', fontSize: '13px', color: '#1e293b' };
-    const headerCellStyle = { ...cellStyle, backgroundColor: '#f1f5f9', fontWeight: 'bold' as const, fontSize: '12px', color: '#475569' };
-    const sectionHeader = (bg: string) => ({ backgroundColor: bg, color: 'white', textAlign: 'center' as const, padding: '8px', fontSize: '14px', fontWeight: 'bold' as const, border: `1.5px solid ${bg}` });
+
+    const cellStyle: React.CSSProperties = {
+        border: `1px solid ${COLORS.border}`,
+        padding: '7px 12px',
+        fontSize: '12px',
+        color: COLORS.text,
+        verticalAlign: 'middle',
+    };
+
+    const headerCellStyle: React.CSSProperties = {
+        ...cellStyle,
+        backgroundColor: COLORS.headerBg,
+        fontWeight: 'bold',
+        fontSize: '11px',
+        color: COLORS.textLight,
+        width: '18%',
+    };
+
+    const sectionHeader = (bg: string): React.CSSProperties => ({
+        backgroundColor: bg,
+        color: 'white',
+        textAlign: 'center',
+        padding: '6px 8px',
+        fontSize: '13px',
+        fontWeight: 'bold',
+        border: `1px solid ${bg}`,
+        letterSpacing: '0.5px',
+    });
+
+    const tableStyle: React.CSSProperties = {
+        width: '100%',
+        borderCollapse: 'collapse',
+        marginBottom: '10px',
+    };
 
     return (
         <>
             <Head title={`استمارة تكليف - ${a.trainer.name}`} />
             <style>{`
                 @media print {
-                    @page { size: A4 portrait; margin: 15mm 12mm 15mm 12mm; }
+                    @page { size: A4 portrait; margin: 12mm 10mm 12mm 10mm; }
                     body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
                 }
-                body { background: #f1f5f9; }
+                body { background: #e2e8f0; margin: 0; }
             `}</style>
 
             <div style={{
                 maxWidth: '210mm',
                 margin: '0 auto',
-                padding: '20px',
+                padding: '24px 28px',
                 backgroundColor: 'white',
                 fontFamily: 'Arial, Tahoma, sans-serif',
                 direction: 'rtl',
-                lineHeight: '1.6',
+                lineHeight: '1.5',
+                boxShadow: '0 0 20px rgba(0,0,0,0.1)',
             }}>
-                {/* Header with logos */}
-                <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
+                {/* Top decorative line */}
+                <div style={{
+                    height: '4px',
+                    background: `linear-gradient(to left, ${COLORS.primary}, ${COLORS.accent4}, ${COLORS.accent3})`,
+                    marginBottom: '16px',
+                    borderRadius: '2px',
+                }} />
+
+                {/* Header */}
+                <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '16px' }}>
                     <tbody>
                         <tr>
-                            <td style={{ width: '25%', textAlign: 'right', verticalAlign: 'middle' }}>
+                            <td style={{ width: '20%', textAlign: 'right', verticalAlign: 'middle' }}>
                                 {organizationLogo && (
-                                    <img src={organizationLogo} alt="" style={{ height: '80px', objectFit: 'contain' }} />
+                                    <img src={organizationLogo} alt="" style={{ height: '70px', objectFit: 'contain' }} />
                                 )}
                             </td>
-                            <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
-                                <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#1e3a5f', marginBottom: '4px' }}>
+                            <td style={{ textAlign: 'center', verticalAlign: 'middle', padding: '0 10px' }}>
+                                <div style={{ fontSize: '11px', color: COLORS.textMuted, marginBottom: '4px' }}>
+                                    {organizationName}
+                                </div>
+                                <div style={{
+                                    fontSize: '19px',
+                                    fontWeight: 'bold',
+                                    color: COLORS.primary,
+                                    letterSpacing: '1px',
+                                }}>
                                     استمارة التكليف بالمهام التدريبية
                                 </div>
-                                <div style={{ fontSize: '13px', color: '#64748b' }}>{organizationName}</div>
+                                <div style={{
+                                    width: '80px',
+                                    height: '2px',
+                                    backgroundColor: COLORS.accent3,
+                                    margin: '6px auto 0',
+                                    borderRadius: '1px',
+                                }} />
                             </td>
-                            <td style={{ width: '25%', textAlign: 'left', verticalAlign: 'middle' }}>
+                            <td style={{ width: '20%', textAlign: 'left', verticalAlign: 'middle' }}>
                                 {organizationLogo && (
-                                    <img src={organizationLogo} alt="" style={{ height: '80px', objectFit: 'contain' }} />
+                                    <img src={organizationLogo} alt="" style={{ height: '70px', objectFit: 'contain' }} />
                                 )}
                             </td>
                         </tr>
@@ -82,14 +151,14 @@ export default function Print({ assignment, organizationName, organizationLogo }
                 </table>
 
                 {/* بيانات المكلف */}
-                <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '16px' }}>
+                <table style={tableStyle}>
                     <tbody>
                         <tr>
-                            <td colSpan={4} style={sectionHeader('rgb(137, 20, 60)')}>بيانات المكلف</td>
+                            <td colSpan={4} style={sectionHeader(COLORS.accent1)}>بيانات المكلف</td>
                         </tr>
                         <tr>
                             <td style={headerCellStyle}>اسم المكلف</td>
-                            <td style={cellStyle}>{a.trainer.name}</td>
+                            <td style={{ ...cellStyle, fontWeight: 'bold' }}>{a.trainer.name}</td>
                             <td style={headerCellStyle}>جهة العمل</td>
                             <td style={cellStyle}>{a.trainer.employer || '-'}</td>
                         </tr>
@@ -103,53 +172,91 @@ export default function Print({ assignment, organizationName, organizationLogo }
                 </table>
 
                 {/* بيانات البرنامج التدريبي */}
-                <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '16px' }}>
+                <table style={tableStyle}>
                     <tbody>
                         <tr>
-                            <td colSpan={4} style={sectionHeader('rgb(15, 66, 96)')}>بيانات البرنامج التدريبي</td>
+                            <td colSpan={4} style={sectionHeader(COLORS.accent2)}>بيانات البرنامج التدريبي</td>
                         </tr>
                         <tr>
                             <td style={headerCellStyle}>عنوان البرنامج التدريبي</td>
-                            <td style={cellStyle}>{a.program.name}</td>
+                            <td style={{ ...cellStyle, fontWeight: 'bold' }}>{a.program.name}</td>
                             <td style={headerCellStyle}>نوع التكليف</td>
                             <td style={cellStyle}>{a.assignment_type}</td>
                         </tr>
                         <tr>
+                            <td style={headerCellStyle}>الحقيبة التدريبية</td>
+                            <td style={cellStyle}>{a.package.name}</td>
                             <td style={headerCellStyle}>عدد الساعات</td>
-                            <td style={cellStyle}>{a.package.hours}</td>
-                            <td style={headerCellStyle}>عدد الأيام</td>
-                            <td style={cellStyle}>{a.package.days}</td>
+                            <td style={cellStyle}>{a.package.hours} ساعة</td>
                         </tr>
                         <tr>
+                            <td style={headerCellStyle}>عدد الأيام</td>
+                            <td style={cellStyle}>{a.package.days} يوم</td>
                             <td style={headerCellStyle}>تاريخ البدء</td>
                             <td style={cellStyle}>{a.start_date ? a.start_date.substring(0, 10) : '-'}</td>
+                        </tr>
+                        <tr>
                             <td style={headerCellStyle}>تاريخ الانتهاء</td>
                             <td style={cellStyle}>{a.end_date ? a.end_date.substring(0, 10) : '-'}</td>
+                            {a.groups.length > 0 ? (
+                                <>
+                                    <td style={headerCellStyle}>المجموعات</td>
+                                    <td style={cellStyle}>{a.groups.map(g => g.name).join('، ')}</td>
+                                </>
+                            ) : (
+                                <>
+                                    <td style={headerCellStyle}></td>
+                                    <td style={cellStyle}></td>
+                                </>
+                            )}
                         </tr>
-                        {a.groups.length > 0 && (
-                            <tr>
-                                <td style={headerCellStyle}>المجموعات</td>
-                                <td colSpan={3} style={cellStyle}>{a.groups.map(g => g.name).join('، ')}</td>
-                            </tr>
-                        )}
                     </tbody>
                 </table>
 
                 {/* تعليمات مهمة */}
-                <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '16px' }}>
+                <table style={tableStyle}>
                     <tbody>
                         <tr>
-                            <td style={sectionHeader('rgb(18, 155, 130)')}>تعليمات مهمة</td>
+                            <td style={sectionHeader(COLORS.accent3)}>تعليمات مهمة</td>
                         </tr>
                         <tr>
-                            <td style={{ ...cellStyle, lineHeight: '2', fontSize: '12px' }}>
-                                <div style={{ marginBottom: '8px' }}>
-                                    <strong>1</strong>&nbsp;&nbsp;
-                                    يتم صرف مكافأة التدريب لـ (المدرب/المعد) وفق الساعات التدريبية الفعلية، سواء طابقت ما هو موضح في التكليف، أو زادت عليه أو نقصت، وذلك حسب ما يتم اعتماده من المركز.
+                            <td style={{
+                                ...cellStyle,
+                                lineHeight: '2',
+                                fontSize: '11px',
+                                padding: '10px 16px',
+                            }}>
+                                <div style={{ marginBottom: '4px', display: 'flex', gap: '8px' }}>
+                                    <span style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        width: '20px',
+                                        height: '20px',
+                                        borderRadius: '50%',
+                                        backgroundColor: COLORS.accent3,
+                                        color: 'white',
+                                        fontSize: '10px',
+                                        fontWeight: 'bold',
+                                        flexShrink: 0,
+                                    }}>1</span>
+                                    <span>يتم صرف مكافأة التدريب لـ (المدرب/المعد) وفق الساعات التدريبية الفعلية، سواء طابقت ما هو موضح في التكليف، أو زادت عليه أو نقصت، وذلك حسب ما يتم اعتماده من المركز.</span>
                                 </div>
-                                <div>
-                                    <strong>2</strong>&nbsp;&nbsp;
-                                    يلزم استكمال تعبئة التكليف وتوقيعه، وإعادة إرساله خلال مدة أقصاها (3) أيام عمل من تاريخ استلامه، وفي حال عدم استلامه موقعاً خلال المدة المحددة يعتبر ملغى تلقائياً.
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                    <span style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        width: '20px',
+                                        height: '20px',
+                                        borderRadius: '50%',
+                                        backgroundColor: COLORS.accent3,
+                                        color: 'white',
+                                        fontSize: '10px',
+                                        fontWeight: 'bold',
+                                        flexShrink: 0,
+                                    }}>2</span>
+                                    <span>يلزم استكمال تعبئة التكليف وتوقيعه، وإعادة إرساله خلال مدة أقصاها (3) أيام عمل من تاريخ استلامه، وفي حال عدم استلامه موقعاً خلال المدة المحددة يعتبر ملغى تلقائياً.</span>
                                 </div>
                             </td>
                         </tr>
@@ -157,11 +264,23 @@ export default function Print({ assignment, organizationName, organizationLogo }
                 </table>
 
                 {/* إقرار */}
-                <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '16px' }}>
+                <table style={tableStyle}>
                     <tbody>
                         <tr>
-                            <td style={{ ...cellStyle, lineHeight: '2', fontSize: '12px' }}>
-                                أقر أنا&nbsp;&nbsp;<strong style={{ borderBottom: '1px dotted #64748b', paddingBottom: '2px' }}>{a.trainer.name}</strong>&nbsp;&nbsp;
+                            <td style={{
+                                ...cellStyle,
+                                lineHeight: '2',
+                                fontSize: '11px',
+                                padding: '10px 16px',
+                                backgroundColor: '#fefce8',
+                                borderRight: `3px solid ${COLORS.accent5}`,
+                            }}>
+                                <strong style={{ color: COLORS.accent5 }}>إقرار: </strong>
+                                أقر أنا&nbsp;&nbsp;<strong style={{
+                                    borderBottom: `1.5px dotted ${COLORS.primary}`,
+                                    paddingBottom: '1px',
+                                    color: COLORS.primary,
+                                }}>{a.trainer.name}</strong>&nbsp;&nbsp;
                                 والموقع أدناه بالعلم بموعد التكليف المذكور أعلاه، وأقر بالتزامي بالمواعيد والتعليمات والحفاظ على حقوق العمل وخصوصيته لمركز التدريب والتطوير.
                             </td>
                         </tr>
@@ -169,25 +288,25 @@ export default function Print({ assignment, organizationName, organizationLogo }
                 </table>
 
                 {/* اعتماد المكلف ومدير جهة عمله */}
-                <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '16px' }}>
+                <table style={tableStyle}>
                     <tbody>
                         <tr>
-                            <td colSpan={4} style={sectionHeader('rgb(65, 148, 179)')}>اعتماد المكلف ومدير جهة عمله</td>
+                            <td colSpan={4} style={sectionHeader(COLORS.accent4)}>اعتماد المكلف ومدير جهة عمله</td>
                         </tr>
                         <tr>
                             <td style={headerCellStyle}>اسم المدرب</td>
-                            <td style={cellStyle}>{a.trainer.name}</td>
+                            <td style={{ ...cellStyle, fontWeight: 'bold' }}>{a.trainer.name}</td>
                             <td style={headerCellStyle}>اسم المدير</td>
-                            <td style={cellStyle}></td>
+                            <td style={{ ...cellStyle, fontWeight: 'bold' }}>{a.trainer.direct_manager || ''}</td>
                         </tr>
                         <tr>
-                            <td style={headerCellStyle}>توقيع المدرب</td>
-                            <td style={{ ...cellStyle, height: '50px' }}></td>
+                            <td style={headerCellStyle}>التوقيع</td>
+                            <td style={{ ...cellStyle, height: '45px' }}></td>
                             <td style={headerCellStyle}>
-                                <div>توقيع المدير</div>
-                                <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 'normal' }}>(في حال نوع التكليف "تدريب تربوي" فقط)</div>
+                                <div>التوقيع</div>
+                                <div style={{ fontSize: '9px', color: COLORS.textMuted, fontWeight: 'normal' }}>(في حال نوع التكليف "تدريب تربوي" فقط)</div>
                             </td>
-                            <td style={{ ...cellStyle, height: '50px' }}></td>
+                            <td style={{ ...cellStyle, height: '45px' }}></td>
                         </tr>
                     </tbody>
                 </table>
@@ -196,7 +315,7 @@ export default function Print({ assignment, organizationName, organizationLogo }
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <tbody>
                         <tr>
-                            <td colSpan={4} style={sectionHeader('rgb(162, 145, 96)')}>اعتماد مركز التدريب والتطوير</td>
+                            <td colSpan={4} style={sectionHeader(COLORS.accent5)}>اعتماد مركز التدريب والتطوير</td>
                         </tr>
                         <tr>
                             <td style={{ ...headerCellStyle, textAlign: 'center', width: '25%' }}>المشرف</td>
@@ -211,13 +330,21 @@ export default function Print({ assignment, organizationName, organizationLogo }
                             </td>
                         </tr>
                         <tr>
-                            <td style={{ ...cellStyle, height: '60px', textAlign: 'center' }}></td>
-                            <td style={{ ...cellStyle, height: '60px', textAlign: 'center' }}></td>
-                            <td style={{ ...cellStyle, height: '60px', textAlign: 'center' }}></td>
-                            <td style={{ ...cellStyle, height: '60px', textAlign: 'center' }}></td>
+                            <td style={{ ...cellStyle, height: '55px', textAlign: 'center' }}></td>
+                            <td style={{ ...cellStyle, height: '55px', textAlign: 'center' }}></td>
+                            <td style={{ ...cellStyle, height: '55px', textAlign: 'center' }}></td>
+                            <td style={{ ...cellStyle, height: '55px', textAlign: 'center' }}></td>
                         </tr>
                     </tbody>
                 </table>
+
+                {/* Bottom decorative line */}
+                <div style={{
+                    height: '3px',
+                    background: `linear-gradient(to left, ${COLORS.primary}, ${COLORS.accent4}, ${COLORS.accent3})`,
+                    marginTop: '12px',
+                    borderRadius: '2px',
+                }} />
             </div>
         </>
     );
