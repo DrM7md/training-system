@@ -75,6 +75,10 @@ class AssignmentController extends Controller
 
         $assignment->groups()->attach($validated['group_ids']);
 
+        // Update trainer_id on the assigned groups
+        ProgramGroup::whereIn('id', $validated['group_ids'])
+            ->update(['trainer_id' => $validated['trainer_id']]);
+
         return back()->with('success', 'تم إضافة التكليف بنجاح');
     }
 
@@ -102,7 +106,21 @@ class AssignmentController extends Controller
             'notes' => $validated['notes'] ?? null,
         ]);
 
+        // Get old group IDs before sync to clear their trainer
+        $oldGroupIds = $assignment->groups()->pluck('program_groups.id')->toArray();
         $assignment->groups()->sync($validated['group_ids']);
+
+        // Clear trainer from groups that were removed from this assignment
+        $removedGroupIds = array_diff($oldGroupIds, $validated['group_ids']);
+        if (!empty($removedGroupIds)) {
+            ProgramGroup::whereIn('id', $removedGroupIds)
+                ->where('trainer_id', $assignment->trainer_id)
+                ->update(['trainer_id' => null]);
+        }
+
+        // Update trainer_id on the new assigned groups
+        ProgramGroup::whereIn('id', $validated['group_ids'])
+            ->update(['trainer_id' => $validated['trainer_id']]);
 
         return back()->with('success', 'تم تحديث التكليف بنجاح');
     }
@@ -120,6 +138,14 @@ class AssignmentController extends Controller
 
     public function destroy(Assignment $assignment)
     {
+        // Clear trainer from groups that belong to this assignment
+        $groupIds = $assignment->groups()->pluck('program_groups.id')->toArray();
+        if (!empty($groupIds)) {
+            ProgramGroup::whereIn('id', $groupIds)
+                ->where('trainer_id', $assignment->trainer_id)
+                ->update(['trainer_id' => null]);
+        }
+
         $assignment->delete();
         return back()->with('success', 'تم حذف التكليف بنجاح');
     }
