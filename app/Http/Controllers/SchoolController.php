@@ -28,11 +28,20 @@ class SchoolController extends Controller
             ->orderBy('education_level')
             ->pluck('education_level');
 
+        $totalCount = School::where('academic_year_id', $currentYear?->id)->count();
+        $maleCount = School::where('academic_year_id', $currentYear?->id)->where('type', 'male')->count();
+        $femaleCount = School::where('academic_year_id', $currentYear?->id)->where('type', 'female')->count();
+
         return Inertia::render('Schools/Index', [
             'schools' => $schools,
             'filters' => $request->only(['search', 'type', 'education_level']),
             'educationLevels' => $educationLevels,
             'currentYear' => $currentYear ? $currentYear->name : null,
+            'stats' => [
+                'total' => $totalCount,
+                'male' => $maleCount,
+                'female' => $femaleCount,
+            ],
         ]);
     }
 
@@ -81,5 +90,64 @@ class SchoolController extends Controller
     {
         $school->delete();
         return back()->with('success', 'تم حذف المدرسة بنجاح');
+    }
+
+    public function statistics()
+    {
+        $currentYear = AcademicYear::current();
+        $yearId = $currentYear?->id;
+
+        // إحصائيات حسب المرحلة والفئة
+        $byLevelAndType = School::where('academic_year_id', $yearId)
+            ->whereNotNull('education_level')
+            ->selectRaw("education_level, type, count(*) as count")
+            ->groupBy('education_level', 'type')
+            ->get()
+            ->groupBy('education_level')
+            ->map(fn($group) => [
+                'male' => $group->where('type', 'male')->sum('count'),
+                'female' => $group->where('type', 'female')->sum('count'),
+                'total' => $group->sum('count'),
+            ]);
+
+        // أعلى 15 مدرسة من حيث عدد المتدربين
+        $topSchoolsByTrainees = School::where('academic_year_id', $yearId)
+            ->withCount('trainees')
+            ->orderByDesc('trainees_count')
+            ->limit(15)
+            ->get()
+            ->map(fn($s) => [
+                'name' => $s->name,
+                'trainees_count' => $s->trainees_count,
+                'type' => $s->type,
+            ]);
+
+        // إحصائيات عامة
+        $totalSchools = School::where('academic_year_id', $yearId)->count();
+        $totalMale = School::where('academic_year_id', $yearId)->where('type', 'male')->count();
+        $totalFemale = School::where('academic_year_id', $yearId)->where('type', 'female')->count();
+        $totalTrainees = \App\Models\Trainee::whereHas('school', fn($q) => $q->where('academic_year_id', $yearId))->count();
+
+        // توزيع المدارس حسب المنطقة
+        $byDistrict = School::where('academic_year_id', $yearId)
+            ->whereNotNull('district')
+            ->where('district', '!=', '')
+            ->selectRaw("district, count(*) as count")
+            ->groupBy('district')
+            ->orderByDesc('count')
+            ->get();
+
+        return Inertia::render('Schools/Statistics', [
+            'currentYear' => $currentYear ? $currentYear->name : null,
+            'byLevelAndType' => $byLevelAndType,
+            'topSchoolsByTrainees' => $topSchoolsByTrainees,
+            'byDistrict' => $byDistrict,
+            'stats' => [
+                'total' => $totalSchools,
+                'male' => $totalMale,
+                'female' => $totalFemale,
+                'trainees' => $totalTrainees,
+            ],
+        ]);
     }
 }

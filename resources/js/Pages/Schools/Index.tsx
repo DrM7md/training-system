@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Components/Layout/AuthenticatedLayout';
 import { Head, router, useForm } from '@inertiajs/react';
 import { useState, useRef } from 'react';
-import { Plus, Edit2, Trash2, School, Search, Users, GraduationCap, X, Download, Upload, FileSpreadsheet } from 'lucide-react';
+import { Plus, Edit2, Trash2, School, Search, Users, GraduationCap, X, Download, Upload, FileSpreadsheet, BarChart3 } from 'lucide-react';
 import Card from '@/Components/UI/Card';
 import Button from '@/Components/UI/Button';
 import Badge from '@/Components/UI/Badge';
@@ -33,6 +33,7 @@ interface Props {
     filters: { search?: string; type?: string; education_level?: string };
     currentYear: string | null;
     educationLevels: string[];
+    stats: { total: number; male: number; female: number };
 }
 
 const typeOptions = [
@@ -45,7 +46,7 @@ const typeLabels: Record<string, string> = {
     female: 'بنات',
 };
 
-export default function Index({ schools, filters, currentYear, educationLevels }: Props) {
+export default function Index({ schools, filters, currentYear, educationLevels, stats }: Props) {
     const [showForm, setShowForm] = useState(false);
     const [showImport, setShowImport] = useState(false);
     const [editing, setEditing] = useState<SchoolType | null>(null);
@@ -141,6 +142,55 @@ export default function Index({ schools, filters, currentYear, educationLevels }
                     </div>
                 }
             />
+
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
+                <Card className="border-r-4 border-indigo-500 hover:shadow-sm transition-all">
+                    <div className="flex items-center gap-4">
+                        <div className="p-3 rounded-xl bg-indigo-50">
+                            <School className="h-5 w-5 text-indigo-600" />
+                        </div>
+                        <div>
+                            <p className="text-sm text-slate-500">إجمالي المدارس</p>
+                            <p className="text-2xl font-bold text-slate-800">{stats.total}</p>
+                        </div>
+                    </div>
+                </Card>
+                <Card className="border-r-4 border-blue-500 hover:shadow-sm transition-all">
+                    <div className="flex items-center gap-4">
+                        <div className="p-3 rounded-xl bg-blue-50">
+                            <Users className="h-5 w-5 text-blue-600" />
+                        </div>
+                        <div>
+                            <p className="text-sm text-slate-500">مدارس بنين</p>
+                            <p className="text-2xl font-bold text-slate-800">{stats.male}</p>
+                        </div>
+                    </div>
+                </Card>
+                <Card className="border-r-4 border-pink-500 hover:shadow-sm transition-all">
+                    <div className="flex items-center gap-4">
+                        <div className="p-3 rounded-xl bg-pink-50">
+                            <Users className="h-5 w-5 text-pink-600" />
+                        </div>
+                        <div>
+                            <p className="text-sm text-slate-500">مدارس بنات</p>
+                            <p className="text-2xl font-bold text-slate-800">{stats.female}</p>
+                        </div>
+                    </div>
+                </Card>
+                <a href={route('schools.statistics')} className="block">
+                    <Card className="border-r-4 border-emerald-500 hover:shadow-md transition-all cursor-pointer h-full">
+                        <div className="flex items-center gap-4">
+                            <div className="p-3 rounded-xl bg-emerald-50">
+                                <BarChart3 className="h-5 w-5 text-emerald-600" />
+                            </div>
+                            <div>
+                                <p className="text-sm text-slate-500">الإحصائيات</p>
+                                <p className="text-sm font-semibold text-emerald-600">عرض التفاصيل &larr;</p>
+                            </div>
+                        </div>
+                    </Card>
+                </a>
+            </div>
 
             <Card className="mb-6">
                 <div className="flex flex-col sm:flex-row gap-4 items-center">

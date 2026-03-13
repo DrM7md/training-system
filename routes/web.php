@@ -62,6 +62,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('schedule/sessions/{session}/move', [ScheduleController::class, 'moveSession'])->name('schedule.sessions.move');
 
     Route::resource('schools', SchoolController::class)->except(['create', 'edit', 'show']);
+    Route::get('schools-statistics', [SchoolController::class, 'statistics'])->name('schools.statistics');
 
     Route::resource('employees', EmployeeController::class)->except(['create', 'edit']);
 
