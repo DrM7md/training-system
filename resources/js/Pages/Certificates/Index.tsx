@@ -111,14 +111,18 @@ export default function Index({ templates, logs, assignments, filters, currentYe
         setGenerating(true);
 
         try {
-            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+                || document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1]?.replace(/%3D/g, '=')
+                || '';
             const response = await fetch(route('certificates.generate'), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
                     'Accept': 'application/octet-stream',
                 },
+                credentials: 'same-origin',
                 body: JSON.stringify({
                     template_id: selectedTemplate,
                     assignment_id: selectedAssignment,
@@ -139,14 +143,19 @@ export default function Index({ templates, logs, assignments, filters, currentYe
                 a.download = filename;
                 document.body.appendChild(a);
                 a.click();
-                document.body.removeChild(a);
+                a.remove();
                 URL.revokeObjectURL(url);
 
                 // Reload to update logs
                 router.reload({ only: ['logs'] });
+            } else {
+                const text = await response.text();
+                console.error('Generate error:', response.status, text);
+                alert('حدث خطأ أثناء إنشاء الشهادة. الرجاء المحاولة مرة أخرى.');
             }
-        } catch {
-            // Error handling
+        } catch (err) {
+            console.error('Generate error:', err);
+            alert('حدث خطأ أثناء إنشاء الشهادة.');
         } finally {
             setGenerating(false);
         }
