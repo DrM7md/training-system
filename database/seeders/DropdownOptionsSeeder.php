@@ -23,6 +23,11 @@ class DropdownOptionsSeeder extends Seeder
             ['category' => 'program_types', 'value' => 'تطوير', 'label' => 'تطوير', 'sort_order' => 3, 'is_active' => true],
             ['category' => 'program_types', 'value' => 'أخرى', 'label' => 'أخرى', 'sort_order' => 4, 'is_active' => true],
 
+            // أنواع التكليفات
+            ['category' => 'assignment_types', 'value' => 'إعداد حقيبة', 'label' => 'إعداد حقيبة', 'sort_order' => 1, 'is_active' => true],
+            ['category' => 'assignment_types', 'value' => 'تنقيح حقيبة', 'label' => 'تنقيح حقيبة', 'sort_order' => 2, 'is_active' => true],
+            ['category' => 'assignment_types', 'value' => 'تدريب تربوي', 'label' => 'تدريب تربوي', 'sort_order' => 3, 'is_active' => true],
+
             // قاعات الاجتماعات
             ['category' => 'meeting_halls', 'value' => 'main_hall', 'label' => 'القاعة الرئيسية', 'sort_order' => 1, 'is_active' => true],
             ['category' => 'meeting_halls', 'value' => 'meeting_room_1', 'label' => 'غرفة الاجتماعات 1', 'sort_order' => 2, 'is_active' => true],

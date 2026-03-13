@@ -14,6 +14,9 @@ import {
     PanelLeft,
     UserCog,
     Layers,
+    ClipboardList,
+    Banknote,
+    Award,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useSidebar } from '@/Hooks/useSidebar';
@@ -45,6 +48,15 @@ const menuItems: MenuItem[] = [
         children: [
             { title: 'القاعات التدريبية', icon: Building2, href: '/training-halls' },
             { title: 'المدربين', icon: GraduationCap, href: '/trainers' },
+        ],
+    },
+    {
+        title: 'العمليات التدريبية',
+        icon: ClipboardList,
+        children: [
+            { title: 'التكليفات', icon: ClipboardList, href: '/assignments' },
+            { title: 'صرف المستحقات', icon: Banknote, href: '/payments' },
+            { title: 'الشهادات', icon: Award, href: '/certificates' },
         ],
     },
     { title: 'تقويم الاجتماعات', icon: Calendar, href: '/meeting-bookings' },
