@@ -15,13 +15,14 @@ class TrainerController extends Controller
             ->when($request->search, fn($q, $s) => $q->where('name', 'like', "%{$s}%"))
             ->when($request->gender, fn($q, $g) => $q->where('gender', $g))
             ->when($request->is_internal !== null, fn($q) => $q->where('is_internal', $request->is_internal))
+            ->when($request->government !== null && $request->government !== '', fn($q) => $q->where('is_government_employee', $request->government))
             ->orderBy('name')
             ->paginate(20)
             ->withQueryString();
 
         return Inertia::render('Trainers/Index', [
             'trainers' => $trainers,
-            'filters' => $request->only(['search', 'gender', 'is_internal']),
+            'filters' => $request->only(['search', 'gender', 'is_internal', 'government']),
         ]);
     }
 

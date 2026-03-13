@@ -25,7 +25,7 @@ class PaymentController extends Controller
             ->toArray();
 
         // Build query
-        $query = Assignment::with(['trainer', 'program', 'package', 'groups']);
+        $query = Assignment::with(['trainer:id,name,national_id,employee_id,employer,is_government_employee', 'program', 'package', 'groups']);
 
         if ($request->date_from) {
             $query->where('start_date', '>=', $request->date_from);

@@ -64,7 +64,7 @@ interface Trainer {
 
 interface Props {
     trainers: { data: Trainer[]; current_page: number; last_page: number; links: Array<{ url: string | null; label: string; active: boolean }> };
-    filters: { search?: string; gender?: string; is_internal?: string };
+    filters: { search?: string; gender?: string; is_internal?: string; government?: string };
     trainer?: Trainer;
 }
 
@@ -101,6 +101,7 @@ export default function Index({ trainers, filters, trainer }: Props) {
     const [search, setSearch] = useState(filters.search || '');
     const [genderFilter, setGenderFilter] = useState(filters.gender || '');
     const [internalFilter, setInternalFilter] = useState(filters.is_internal || '');
+    const [governmentFilter, setGovernmentFilter] = useState(filters.government || '');
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const importForm = useForm<{ file: File | null; mode: string }>({ file: null, mode: 'skip' });
@@ -163,11 +164,12 @@ export default function Index({ trainers, filters, trainer }: Props) {
               notes: '',
           };
 
-    const doSearch = (s: string, g: string, i: string) => {
+    const doSearch = (s: string, g: string, i: string, gov?: string) => {
         router.get(route('trainers.index'), {
             search: s || undefined,
             gender: g || undefined,
-            is_internal: i || undefined
+            is_internal: i || undefined,
+            government: gov || undefined,
         }, { preserveState: true, preserveScroll: true });
     };
 
@@ -175,27 +177,37 @@ export default function Index({ trainers, filters, trainer }: Props) {
     const handleSearchChange = (val: string) => {
         setSearch(val);
         if (searchTimer) clearTimeout(searchTimer);
-        setSearchTimer(setTimeout(() => doSearch(val, genderFilter, internalFilter), 400));
+        setSearchTimer(setTimeout(() => doSearch(val, genderFilter, internalFilter, governmentFilter), 400));
     };
 
     const handleGenderChange = (val: string) => {
         setGenderFilter(val);
-        doSearch(search, val, internalFilter);
+        doSearch(search, val, internalFilter, governmentFilter);
     };
 
     const clearGender = () => {
         setGenderFilter('');
-        doSearch(search, '', internalFilter);
+        doSearch(search, '', internalFilter, governmentFilter);
     };
 
     const handleInternalChange = (val: string) => {
         setInternalFilter(val);
-        doSearch(search, genderFilter, val);
+        doSearch(search, genderFilter, val, governmentFilter);
     };
 
     const clearInternal = () => {
         setInternalFilter('');
-        doSearch(search, genderFilter, '');
+        doSearch(search, genderFilter, '', governmentFilter);
+    };
+
+    const handleGovernmentChange = (val: string) => {
+        setGovernmentFilter(val);
+        doSearch(search, genderFilter, internalFilter, val);
+    };
+
+    const clearGovernment = () => {
+        setGovernmentFilter('');
+        doSearch(search, genderFilter, internalFilter, '');
     };
 
     const handleViewTrainer = (t: Trainer) => {
@@ -301,6 +313,26 @@ export default function Index({ trainers, filters, trainer }: Props) {
                             <button
                                 type="button"
                                 onClick={clearInternal}
+                                className="absolute left-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors"
+                            >
+                                <X className="h-4 w-4" />
+                            </button>
+                        )}
+                    </div>
+                    <div className="relative">
+                        <select
+                            value={governmentFilter}
+                            onChange={(e) => handleGovernmentChange(e.target.value)}
+                            className="px-4 py-2.5 pl-10 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all appearance-none"
+                        >
+                            <option value="">الفئة الوظيفية</option>
+                            <option value="1">منتسبو المدارس</option>
+                            <option value="0">عام</option>
+                        </select>
+                        {governmentFilter && (
+                            <button
+                                type="button"
+                                onClick={clearGovernment}
                                 className="absolute left-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors"
                             >
                                 <X className="h-4 w-4" />
