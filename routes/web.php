@@ -19,6 +19,7 @@ use App\Http\Controllers\MeetingBookingController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AssignmentController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\ImportController;
 use App\Exports\ProgramsExport;
 use App\Exports\PackagesExport;
@@ -73,7 +74,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::resource('assignments', AssignmentController::class)->except(['create', 'edit']);
     Route::get('payments', [PaymentController::class, 'index'])->name('payments.index');
-    Route::get('certificates', fn() => \Inertia\Inertia::render('Certificates/Index'))->name('certificates.index');
+    Route::get('certificates', [CertificateController::class, 'index'])->name('certificates.index');
+    Route::post('certificates/templates', [CertificateController::class, 'storeTemplate'])->name('certificates.templates.store');
+    Route::post('certificates/templates/{template}', [CertificateController::class, 'updateTemplate'])->name('certificates.templates.update');
+    Route::delete('certificates/templates/{template}', [CertificateController::class, 'destroyTemplate'])->name('certificates.templates.destroy');
+    Route::post('certificates/generate', [CertificateController::class, 'generate'])->name('certificates.generate');
+    Route::get('certificates/logs/{log}/download', [CertificateController::class, 'download'])->name('certificates.logs.download');
 
     Route::get('export/programs', fn() => Excel::download(new ProgramsExport, 'البرامج_التدريبية.xlsx'))->name('export.programs');
     Route::get('export/packages', fn() => Excel::download(new PackagesExport, 'الحقائب_التدريبية.xlsx'))->name('export.packages');
