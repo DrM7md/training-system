@@ -200,12 +200,15 @@ export default function Print({ assignment, organizationName, organizationLogo }
                         </tr>
                         <tr>
                             <td style={{ ...headerCellStyle, textAlign: 'center', width: '25%' }}>المشرف</td>
+                            <td style={{ ...headerCellStyle, textAlign: 'center', width: '25%' }}>
+                                <div>رئيس قسم</div>
+                                <div>التدريب التربوي</div>
+                            </td>
                             <td style={{ ...headerCellStyle, textAlign: 'center', width: '25%' }}>المسؤول المالي</td>
                             <td style={{ ...headerCellStyle, textAlign: 'center', width: '25%' }}>
                                 <div>مدير مركز</div>
                                 <div>التدريب والتطوير</div>
                             </td>
-                            <td style={{ ...headerCellStyle, textAlign: 'center', width: '25%' }}></td>
                         </tr>
                         <tr>
                             <td style={{ ...cellStyle, height: '60px', textAlign: 'center' }}></td>
