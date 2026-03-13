@@ -20,6 +20,7 @@ class User extends Authenticatable
         'gender',
         'job_title',
         'is_active',
+        'signature',
     ];
 
     protected $hidden = [

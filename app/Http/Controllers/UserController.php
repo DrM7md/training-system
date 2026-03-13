@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Spatie\Permission\Models\Role;
 
@@ -38,7 +39,13 @@ class UserController extends Controller
             'job_title' => 'nullable|string|max:255',
             'role' => 'required|exists:roles,name',
             'is_active' => 'boolean',
+            'signature' => 'nullable|image|mimes:png,jpg,jpeg|max:2048',
         ]);
+
+        $signaturePath = null;
+        if ($request->hasFile('signature')) {
+            $signaturePath = $request->file('signature')->store('signatures', 'public');
+        }
 
         $user = User::create([
             'name' => $validated['name'],
@@ -48,6 +55,7 @@ class UserController extends Controller
             'gender' => $validated['gender'] ?? null,
             'job_title' => $validated['job_title'] ?? null,
             'is_active' => $validated['is_active'] ?? true,
+            'signature' => $signaturePath,
         ]);
 
         $user->assignRole($validated['role']);
@@ -66,16 +74,33 @@ class UserController extends Controller
             'job_title' => 'nullable|string|max:255',
             'role' => 'required|exists:roles,name',
             'is_active' => 'boolean',
+            'signature' => 'nullable|image|mimes:png,jpg,jpeg|max:2048',
+            'remove_signature' => 'nullable|boolean',
         ]);
 
-        $user->update([
+        $updateData = [
             'name' => $validated['name'],
             'email' => $validated['email'],
             'phone' => $validated['phone'] ?? null,
             'gender' => $validated['gender'] ?? null,
             'job_title' => $validated['job_title'] ?? null,
             'is_active' => $validated['is_active'] ?? true,
-        ]);
+        ];
+
+        if ($request->hasFile('signature')) {
+            // Delete old signature
+            if ($user->signature) {
+                Storage::disk('public')->delete($user->signature);
+            }
+            $updateData['signature'] = $request->file('signature')->store('signatures', 'public');
+        } elseif ($request->boolean('remove_signature')) {
+            if ($user->signature) {
+                Storage::disk('public')->delete($user->signature);
+            }
+            $updateData['signature'] = null;
+        }
+
+        $user->update($updateData);
 
         if (!empty($validated['password'])) {
             $user->update(['password' => Hash::make($validated['password'])]);
@@ -90,6 +115,10 @@ class UserController extends Controller
     {
         if ($user->id === auth()->id()) {
             return back()->with('error', 'لا يمكنك حذف حسابك');
+        }
+
+        if ($user->signature) {
+            Storage::disk('public')->delete($user->signature);
         }
 
         $user->delete();

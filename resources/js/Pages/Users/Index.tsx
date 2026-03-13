@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Components/Layout/AuthenticatedLayout';
 import { Head, router } from '@inertiajs/react';
 import { useState } from 'react';
-import { Plus, Edit2, Trash2, UserCog, Search, Shield, X } from 'lucide-react';
+import { Plus, Edit2, Trash2, UserCog, Search, Shield, X, Upload, Trash } from 'lucide-react';
 import Card from '@/Components/UI/Card';
 import Button from '@/Components/UI/Button';
 import Badge from '@/Components/UI/Badge';
@@ -19,6 +19,7 @@ interface User {
     gender: string | null;
     job_title: string | null;
     is_active: boolean;
+    signature: string | null;
     roles: Array<{ id: number; name: string }>;
 }
 
@@ -64,6 +65,8 @@ export default function Index({ users, roles, filters }: Props) {
               job_title: editing.job_title || '',
               role: editing.roles[0]?.name || '',
               is_active: editing.is_active,
+              signature: null as File | null,
+              remove_signature: false,
           }
         : {
               name: '',
@@ -75,6 +78,8 @@ export default function Index({ users, roles, filters }: Props) {
               job_title: '',
               role: '',
               is_active: true,
+              signature: null as File | null,
+              remove_signature: false,
           };
 
     const doSearch = (s: string, r: string) => {
@@ -319,6 +324,89 @@ export default function Index({ users, roles, filters }: Props) {
                             />
                             <span className="text-sm text-slate-700 group-hover:text-slate-900">مستخدم نشط</span>
                         </label>
+
+                        {/* التوقيع */}
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-2">التوقيع</label>
+                            {(editing?.signature && !form.data.remove_signature && !form.data.signature) ? (
+                                <div className="flex items-center gap-4">
+                                    <div className="border border-slate-200 rounded-lg p-2 bg-slate-50">
+                                        <img
+                                            src={`/storage/${editing.signature}`}
+                                            alt="التوقيع"
+                                            className="h-16 max-w-[200px] object-contain"
+                                        />
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <label className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-teal-50 text-teal-700 rounded-lg cursor-pointer hover:bg-teal-100 transition-colors">
+                                            <Upload className="h-3.5 w-3.5" />
+                                            تغيير
+                                            <input
+                                                type="file"
+                                                accept="image/png,image/jpeg,image/jpg"
+                                                className="hidden"
+                                                onChange={(e) => {
+                                                    if (e.target.files?.[0]) {
+                                                        form.setData('signature', e.target.files[0]);
+                                                    }
+                                                }}
+                                            />
+                                        </label>
+                                        <button
+                                            type="button"
+                                            onClick={() => form.setData('remove_signature', true)}
+                                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
+                                        >
+                                            <Trash className="h-3.5 w-3.5" />
+                                            حذف
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div>
+                                    {form.data.signature ? (
+                                        <div className="flex items-center gap-4">
+                                            <div className="border border-slate-200 rounded-lg p-2 bg-slate-50">
+                                                <img
+                                                    src={URL.createObjectURL(form.data.signature)}
+                                                    alt="التوقيع الجديد"
+                                                    className="h-16 max-w-[200px] object-contain"
+                                                />
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => form.setData('signature', null)}
+                                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
+                                            >
+                                                <X className="h-3.5 w-3.5" />
+                                                إزالة
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <label className="flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:border-teal-400 hover:bg-teal-50/50 transition-all">
+                                            <Upload className="h-5 w-5 text-slate-400" />
+                                            <span className="text-sm text-slate-500">اختر صورة التوقيع (PNG, JPG)</span>
+                                            <input
+                                                type="file"
+                                                accept="image/png,image/jpeg,image/jpg"
+                                                className="hidden"
+                                                onChange={(e) => {
+                                                    if (e.target.files?.[0]) {
+                                                        form.setData('signature', e.target.files[0]);
+                                                    }
+                                                }}
+                                            />
+                                        </label>
+                                    )}
+                                    {form.data.remove_signature && !form.data.signature && (
+                                        <p className="text-xs text-amber-600 mt-1">سيتم حذف التوقيع عند الحفظ</p>
+                                    )}
+                                </div>
+                            )}
+                            {form.errors.signature && (
+                                <p className="text-xs text-red-500 mt-1">{form.errors.signature}</p>
+                            )}
+                        </div>
                     </>
                 )}
             </FormModal>
