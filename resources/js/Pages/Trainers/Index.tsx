@@ -327,7 +327,7 @@ export default function Index({ trainers, filters, trainer }: Props) {
                         >
                             <option value="">الفئة الوظيفية</option>
                             <option value="1">منتسبو المدارس</option>
-                            <option value="0">عام</option>
+                            <option value="0">منتسبو الوزارة</option>
                         </select>
                         {governmentFilter && (
                             <button

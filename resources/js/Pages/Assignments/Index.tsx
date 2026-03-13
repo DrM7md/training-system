@@ -1,5 +1,5 @@
 import AuthenticatedLayout from '@/Components/Layout/AuthenticatedLayout';
-import { Head, router, useForm } from '@inertiajs/react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { useState, useMemo } from 'react';
 import { Plus, Edit2, Trash2, Search, X, FileText, Printer, ClipboardList } from 'lucide-react';
 import Card from '@/Components/UI/Card';
@@ -55,10 +55,12 @@ interface Assignment {
     start_date: string | null;
     end_date: string | null;
     notes: string | null;
+    created_by: number | null;
     trainer: Trainer;
     program: { id: number; name: string };
     package: { id: number; name: string; hours: number; days: number };
     groups: { id: number; name: string }[];
+    creator: { id: number; name: string } | null;
 }
 
 interface Props {
@@ -74,6 +76,7 @@ interface Props {
 }
 
 export default function Index({ assignments, trainers, programs, assignmentTypes, filters }: Props) {
+    const { auth } = usePage().props as any;
     const [showForm, setShowForm] = useState(false);
     const [editing, setEditing] = useState<Assignment | null>(null);
     const [deleting, setDeleting] = useState<Assignment | null>(null);
@@ -255,6 +258,7 @@ export default function Index({ assignments, trainers, programs, assignmentTypes
                                     <th className="px-4 py-3.5 text-right text-xs font-bold text-slate-600 uppercase tracking-wide">المجموعات</th>
                                     <th className="px-4 py-3.5 text-right text-xs font-bold text-slate-600 uppercase tracking-wide">نوع التكليف</th>
                                     <th className="px-4 py-3.5 text-right text-xs font-bold text-slate-600 uppercase tracking-wide">الفترة</th>
+                                    <th className="px-4 py-3.5 text-right text-xs font-bold text-slate-600 uppercase tracking-wide">المشرف</th>
                                     <th className="px-4 py-3.5 text-center text-xs font-bold text-slate-600 uppercase tracking-wide">الإجراءات</th>
                                 </tr>
                             </thead>
@@ -284,6 +288,9 @@ export default function Index({ assignments, trainers, programs, assignmentTypes
                                         <td className="px-4 py-3 text-slate-600 text-xs">
                                             {a.start_date && <div>من: {a.start_date.substring(0, 10)}</div>}
                                             {a.end_date && <div>إلى: {a.end_date.substring(0, 10)}</div>}
+                                        </td>
+                                        <td className="px-4 py-3 text-sm text-slate-700">
+                                            {a.creator?.name || '-'}
                                         </td>
                                         <td className="px-4 py-3">
                                             <div className="flex items-center justify-center gap-1">
@@ -452,6 +459,14 @@ export default function Index({ assignments, trainers, programs, assignmentTypes
                                 </div>
                             </div>
                         )}
+                    </div>
+
+                    {/* المشرف */}
+                    <div className="p-3 bg-blue-50 rounded-xl border border-blue-200">
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-blue-700">المشرف:</span>
+                            <span className="text-sm font-bold text-blue-900">{auth.user.name}</span>
+                        </div>
                     </div>
 
                     {/* نوع التكليف والتواريخ */}

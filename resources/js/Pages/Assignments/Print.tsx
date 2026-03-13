@@ -20,6 +20,7 @@ interface Assignment {
     start_date: string | null;
     end_date: string | null;
     notes: string | null;
+    creator: { id: number; name: string } | null;
 }
 
 interface Props {

@@ -10,7 +10,7 @@ class Assignment extends Model
 {
     protected $fillable = [
         'trainer_id', 'program_id', 'package_id',
-        'assignment_type', 'start_date', 'end_date', 'notes',
+        'assignment_type', 'start_date', 'end_date', 'notes', 'created_by',
     ];
 
     protected $casts = [
@@ -36,5 +36,10 @@ class Assignment extends Model
     public function groups(): BelongsToMany
     {
         return $this->belongsToMany(ProgramGroup::class, 'assignment_group');
+    }
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 }

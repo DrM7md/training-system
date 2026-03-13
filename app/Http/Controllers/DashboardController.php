@@ -28,7 +28,7 @@ class DashboardController extends Controller
             'employees' => Employee::active()->count(),
         ];
 
-        $todaySessions = TrainingSession::with(['programGroup.package.program', 'trainingHall', 'trainer'])
+        $todaySessions = TrainingSession::with(['programGroup.package.program', 'programGroup.trainer', 'trainingHall', 'trainer'])
             ->whereDate('date', today())
             ->get()
             ->map(fn($session) => [
@@ -37,7 +37,7 @@ class DashboardController extends Controller
                 'package' => $session->programGroup?->package?->name ?? '-',
                 'group' => $session->programGroup?->name ?? '-',
                 'hall' => $session->trainingHall?->name ?? '-',
-                'trainer' => $session->trainer?->name ?? '-',
+                'trainer' => $session->trainer?->name ?? $session->programGroup?->trainer?->name ?? '-',
                 'status' => $session->status,
                 'day_number' => $session->day_number,
             ]);

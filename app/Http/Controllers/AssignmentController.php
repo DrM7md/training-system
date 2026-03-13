@@ -16,7 +16,7 @@ class AssignmentController extends Controller
 {
     public function index(Request $request)
     {
-        $assignments = Assignment::with(['trainer', 'program', 'package', 'groups'])
+        $assignments = Assignment::with(['trainer', 'program', 'package', 'groups', 'creator:id,name'])
             ->when($request->search, function ($q, $s) {
                 $q->whereHas('trainer', fn($q2) => $q2->where('name', 'like', "%{$s}%"))
                   ->orWhereHas('program', fn($q2) => $q2->where('name', 'like', "%{$s}%"));
@@ -71,6 +71,7 @@ class AssignmentController extends Controller
             'start_date' => $validated['start_date'],
             'end_date' => $validated['end_date'],
             'notes' => $validated['notes'] ?? null,
+            'created_by' => $request->user()->id,
         ]);
 
         $assignment->groups()->attach($validated['group_ids']);
@@ -127,7 +128,7 @@ class AssignmentController extends Controller
 
     public function show(Assignment $assignment)
     {
-        $assignment->load(['trainer', 'program', 'package', 'groups']);
+        $assignment->load(['trainer', 'program', 'package', 'groups', 'creator:id,name']);
 
         return Inertia::render('Assignments/Print', [
             'assignment' => $assignment,
