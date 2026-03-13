@@ -16,7 +16,7 @@ class Trainer extends Model
         'training_experience_years', 'experience_base_date',
         'is_certified_trainer', 'can_prepare_packages', 'training_fields',
         'training_gender', 'trainer_evaluation', 'cooperation_status',
-        'is_internal', 'is_active', 'notes',
+        'is_internal', 'is_active', 'is_government_employee', 'direct_manager', 'notes',
     ];
 
     protected $casts = [
@@ -24,6 +24,7 @@ class Trainer extends Model
         'is_active' => 'boolean',
         'is_certified_trainer' => 'boolean',
         'can_prepare_packages' => 'boolean',
+        'is_government_employee' => 'boolean',
         'experience_base_date' => 'date',
         'training_experience_years' => 'integer',
     ];

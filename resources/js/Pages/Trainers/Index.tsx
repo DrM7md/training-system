@@ -52,6 +52,8 @@ interface Trainer {
     cooperation_status: string | null;
     is_internal: boolean;
     is_active: boolean;
+    is_government_employee: boolean;
+    direct_manager: string | null;
     notes: string | null;
     program_groups_count: number;
     training_sessions_count: number;
@@ -128,6 +130,8 @@ export default function Index({ trainers, filters, trainer }: Props) {
               cooperation_status: editing.cooperation_status || '',
               is_internal: editing.is_internal,
               is_active: editing.is_active,
+              is_government_employee: editing.is_government_employee,
+              direct_manager: editing.direct_manager || '',
               notes: editing.notes || '',
           }
         : {
@@ -154,6 +158,8 @@ export default function Index({ trainers, filters, trainer }: Props) {
               cooperation_status: '',
               is_internal: true,
               is_active: true,
+              is_government_employee: false,
+              direct_manager: '',
               notes: '',
           };
 
@@ -353,6 +359,9 @@ export default function Index({ trainers, filters, trainer }: Props) {
                                 <Badge variant={t.gender === 'male' ? 'info' : 'danger'}>
                                     {t.gender === 'male' ? 'ذكر' : 'أنثى'}
                                 </Badge>
+                                {t.is_government_employee && (
+                                    <Badge variant="info">منتسبو المدارس الحكومية</Badge>
+                                )}
                                 {t.nationality_category && (
                                     <Badge variant={t.nationality_category === 'قطري' ? 'success' : 'default'}>
                                         {t.nationality_category}
@@ -528,6 +537,12 @@ export default function Index({ trainers, filters, trainer }: Props) {
                                     error={form.errors.academic_specialization}
                                 />
                                 <Input
+                                    label="المسؤول المباشر / المدير"
+                                    value={form.data.direct_manager}
+                                    onChange={(e) => form.setData('direct_manager', e.target.value)}
+                                    error={form.errors.direct_manager}
+                                />
+                                <Input
                                     label="سنوات الخبرة في التدريب"
                                     type="number"
                                     value={form.data.training_experience_years}
@@ -627,6 +642,15 @@ export default function Index({ trainers, filters, trainer }: Props) {
                                         className="w-4 h-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
                                     />
                                     <span className="text-sm text-slate-700 group-hover:text-slate-900">نشط</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer group">
+                                    <input
+                                        type="checkbox"
+                                        checked={form.data.is_government_employee}
+                                        onChange={(e) => form.setData('is_government_employee', e.target.checked)}
+                                        className="w-4 h-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+                                    />
+                                    <span className="text-sm text-slate-700 group-hover:text-slate-900">منتسبو المدارس الحكومية</span>
                                 </label>
                             </div>
                         </div>
@@ -870,6 +894,16 @@ export default function Index({ trainers, filters, trainer }: Props) {
                                     <p className="text-sm font-medium text-slate-800">{viewing.cooperation_status}</p>
                                 </div>
                             )}
+                            {viewing.direct_manager && (
+                                <div className="p-3 bg-slate-50 rounded-lg">
+                                    <p className="text-xs text-slate-500">المسؤول المباشر / المدير</p>
+                                    <p className="text-sm font-medium text-slate-800">{viewing.direct_manager}</p>
+                                </div>
+                            )}
+                            <div className="p-3 bg-slate-50 rounded-lg">
+                                <p className="text-xs text-slate-500">الفئة الوظيفية</p>
+                                <p className="text-sm font-medium text-slate-800">{viewing.is_government_employee ? 'منتسبو المدارس الحكومية' : 'غير محدد'}</p>
+                            </div>
                         </div>
 
                         {viewing.training_fields && (

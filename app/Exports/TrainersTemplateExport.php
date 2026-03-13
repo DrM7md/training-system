@@ -22,7 +22,8 @@ class TrainersTemplateExport implements FromArray, WithHeadings, WithStyles, Sho
                 1, 'ذكر', '28401234567', 'E12345', 'أحمد محمد علي', 'قطر',
                 'داخلي', 'وزارة التعليم', 'مدرب أول', 'ماجستير', 'تقنية المعلومات',
                 5, 'نعم', 'نعم', 'التدريب التقني والإداري', 'رجال ونساء',
-                '', 'متعاون', '55512345', 'ahmed@example.com', '',
+                '', 'متعاون', '55512345', 'ahmed@example.com',
+                'نعم', 'محمد أحمد العلي', '',
             ],
         ];
     }
@@ -50,13 +51,15 @@ class TrainersTemplateExport implements FromArray, WithHeadings, WithStyles, Sho
             'حالة التعاون',
             'رقم الجوال',
             'البريد الإلكتروني',
+            'منتسبو المدارس الحكومية',
+            'المسؤول المباشر / المدير',
             'ملاحظات',
         ];
     }
 
     public function styles(Worksheet $sheet)
     {
-        $lastCol = 'U';
+        $lastCol = 'W';
 
         $sheet->setRightToLeft(true);
 
@@ -110,6 +113,11 @@ class TrainersTemplateExport implements FromArray, WithHeadings, WithStyles, Sho
             $sheet->getCell("N{$i}")->setDataValidation(clone $yesNoValidation);
         }
 
+        // Data validation for منتسبو المدارس الحكومية (column U)
+        for ($i = 3; $i <= 500; $i++) {
+            $sheet->getCell("U{$i}")->setDataValidation(clone $yesNoValidation);
+        }
+
         // Data validation for جنس التدريب (column P)
         $trainingGenderValidation = new DataValidation();
         $trainingGenderValidation->setType(DataValidation::TYPE_LIST);
@@ -121,7 +129,8 @@ class TrainersTemplateExport implements FromArray, WithHeadings, WithStyles, Sho
 
         // Set column widths for text fields
         $sheet->getColumnDimension('O')->setWidth(35); // مجالات التدريب
-        $sheet->getColumnDimension('U')->setWidth(25); // ملاحظات
+        $sheet->getColumnDimension('V')->setWidth(25); // المسؤول المباشر
+        $sheet->getColumnDimension('W')->setWidth(25); // ملاحظات
 
         return [];
     }

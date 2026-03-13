@@ -51,6 +51,8 @@ class TrainerController extends Controller
             'cooperation_status' => 'nullable|string|max:100',
             'is_internal' => 'boolean',
             'is_active' => 'boolean',
+            'is_government_employee' => 'boolean',
+            'direct_manager' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
         ]);
 
@@ -124,6 +126,8 @@ class TrainerController extends Controller
             'cooperation_status' => 'nullable|string|max:100',
             'is_internal' => 'boolean',
             'is_active' => 'boolean',
+            'is_government_employee' => 'boolean',
+            'direct_manager' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
         ]);
 

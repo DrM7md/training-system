@@ -36,6 +36,7 @@ const settingLabels: Record<string, { label: string; hint?: string }> = {
     training_end_time: { label: 'وقت نهاية التدريب', hint: 'وقت نهاية الجلسات التدريبية' },
     organization_name: { label: 'اسم المؤسسة', hint: 'اسم مركز أو إدارة التدريب' },
     organization_logo: { label: 'شعار المؤسسة', hint: 'صورة شعار المؤسسة' },
+    filter_government_employees: { label: 'تصفية منتسبو المدارس الحكومية في التكليفات', hint: 'عند التفعيل، يظهر فقط المدربون من منتسبو المدارس الحكومية في صفحة التكليفات' },
     payment_month_1: { label: 'شهر الصرف الأول', hint: 'رقم الشهر (مثلاً: 12 لديسمبر)' },
     payment_month_2: { label: 'شهر الصرف الثاني', hint: 'رقم الشهر (مثلاً: 3 لمارس)' },
     payment_month_3: { label: 'شهر الصرف الثالث', hint: 'رقم الشهر (مثلاً: 6 ليونيو)' },
@@ -44,6 +45,7 @@ const settingLabels: Record<string, { label: string; hint?: string }> = {
 const groupLabels: Record<string, { label: string; icon: React.ElementType }> = {
     training: { label: 'إعدادات التدريب', icon: Clock },
     general: { label: 'إعدادات عامة', icon: Building },
+    assignments: { label: 'إعدادات التكليفات', icon: Settings },
     payments: { label: 'إعدادات الصرف', icon: Settings },
 };
 
@@ -281,6 +283,27 @@ export default function Index({ settings, dropdownCategories }: Props) {
                                                             </div>
                                                         </div>
                                                     </div>
+                                                </div>
+                                            );
+                                        }
+
+                                        if (setting.type === 'boolean') {
+                                            return (
+                                                <div key={setting.key} className="md:col-span-2">
+                                                    <label className="flex items-center gap-3 cursor-pointer group p-3 rounded-lg hover:bg-slate-50 transition-colors">
+                                                        <div className="relative">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={getValue(setting.key) === '1'}
+                                                                onChange={(e) => handleChange(setting.key, e.target.checked ? '1' : '0')}
+                                                                className="w-5 h-5 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <span className="text-sm font-semibold text-slate-700 group-hover:text-slate-900">{info.label}</span>
+                                                            {info.hint && <p className="text-xs text-slate-400 mt-0.5">{info.hint}</p>}
+                                                        </div>
+                                                    </label>
                                                 </div>
                                             );
                                         }

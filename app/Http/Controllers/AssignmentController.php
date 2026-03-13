@@ -26,7 +26,10 @@ class AssignmentController extends Controller
             ->paginate(20)
             ->withQueryString();
 
+        $filterGovernment = Setting::get('filter_government_employees', '0') === '1';
+
         $trainers = Trainer::select('id', 'name', 'national_id', 'employee_id', 'employer')
+            ->when($filterGovernment, fn($q) => $q->where('is_government_employee', true))
             ->orderBy('name')->get();
 
         $programs = Program::with(['packages.groups' => function ($q) {
