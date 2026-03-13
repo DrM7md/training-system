@@ -54,6 +54,7 @@ const categoryLabels: Record<string, string> = {
     meeting_halls:  'قاعات الاجتماعات',
     group_statuses: 'حالات المجموعات',
     assignment_types: 'أنواع التكليفات وقيمة الساعة',
+    job_categories: 'الفئات الوظيفية',
 };
 
 const categoriesWithRate = ['assignment_types'];

@@ -16,13 +16,20 @@ class TrainerController extends Controller
             ->when($request->gender, fn($q, $g) => $q->where('gender', $g))
             ->when($request->is_internal !== null, fn($q) => $q->where('is_internal', $request->is_internal))
             ->when($request->government !== null && $request->government !== '', fn($q) => $q->where('is_government_employee', $request->government))
+            ->when($request->job_category, fn($q, $jc) => $q->where('job_category', $jc))
             ->orderBy('name')
             ->paginate(20)
             ->withQueryString();
 
+        $jobCategories = \App\Models\DropdownOption::where('category', 'job_categories')
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->get(['value', 'label']);
+
         return Inertia::render('Trainers/Index', [
             'trainers' => $trainers,
-            'filters' => $request->only(['search', 'gender', 'is_internal', 'government']),
+            'filters' => $request->only(['search', 'gender', 'is_internal', 'government', 'job_category']),
+            'jobCategories' => $jobCategories,
         ]);
     }
 
@@ -53,6 +60,7 @@ class TrainerController extends Controller
             'is_internal' => 'boolean',
             'is_active' => 'boolean',
             'is_government_employee' => 'boolean',
+            'job_category' => 'nullable|string|max:255',
             'direct_manager' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
         ]);
@@ -128,6 +136,7 @@ class TrainerController extends Controller
             'is_internal' => 'boolean',
             'is_active' => 'boolean',
             'is_government_employee' => 'boolean',
+            'job_category' => 'nullable|string|max:255',
             'direct_manager' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
         ]);

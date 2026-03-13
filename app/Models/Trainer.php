@@ -16,7 +16,7 @@ class Trainer extends Model
         'training_experience_years', 'experience_base_date',
         'is_certified_trainer', 'can_prepare_packages', 'training_fields',
         'training_gender', 'trainer_evaluation', 'cooperation_status',
-        'is_internal', 'is_active', 'is_government_employee', 'direct_manager', 'notes',
+        'is_internal', 'is_active', 'is_government_employee', 'job_category', 'direct_manager', 'notes',
     ];
 
     protected $casts = [

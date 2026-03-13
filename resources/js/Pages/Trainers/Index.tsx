@@ -53,6 +53,7 @@ interface Trainer {
     is_internal: boolean;
     is_active: boolean;
     is_government_employee: boolean;
+    job_category: string | null;
     direct_manager: string | null;
     notes: string | null;
     program_groups_count: number;
@@ -64,7 +65,8 @@ interface Trainer {
 
 interface Props {
     trainers: { data: Trainer[]; current_page: number; last_page: number; links: Array<{ url: string | null; label: string; active: boolean }> };
-    filters: { search?: string; gender?: string; is_internal?: string; government?: string };
+    filters: { search?: string; gender?: string; is_internal?: string; government?: string; job_category?: string };
+    jobCategories: Array<{ value: string; label: string }>;
     trainer?: Trainer;
 }
 
@@ -92,7 +94,7 @@ const statusLabels: Record<string, { label: string; variant: 'success' | 'warnin
     cancelled: { label: 'ملغي', variant: 'danger' },
 };
 
-export default function Index({ trainers, filters, trainer }: Props) {
+export default function Index({ trainers, filters, jobCategories, trainer }: Props) {
     const [showForm, setShowForm] = useState(false);
     const [editing, setEditing] = useState<Trainer | null>(null);
     const [deleting, setDeleting] = useState<Trainer | null>(null);
@@ -102,6 +104,7 @@ export default function Index({ trainers, filters, trainer }: Props) {
     const [genderFilter, setGenderFilter] = useState(filters.gender || '');
     const [internalFilter, setInternalFilter] = useState(filters.is_internal || '');
     const [governmentFilter, setGovernmentFilter] = useState(filters.government || '');
+    const [jobCategoryFilter, setJobCategoryFilter] = useState(filters.job_category || '');
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const importForm = useForm<{ file: File | null; mode: string }>({ file: null, mode: 'skip' });
@@ -132,6 +135,7 @@ export default function Index({ trainers, filters, trainer }: Props) {
               is_internal: editing.is_internal,
               is_active: editing.is_active,
               is_government_employee: editing.is_government_employee,
+              job_category: editing.job_category || '',
               direct_manager: editing.direct_manager || '',
               notes: editing.notes || '',
           }
@@ -160,16 +164,18 @@ export default function Index({ trainers, filters, trainer }: Props) {
               is_internal: true,
               is_active: true,
               is_government_employee: false,
+              job_category: '',
               direct_manager: '',
               notes: '',
           };
 
-    const doSearch = (s: string, g: string, i: string, gov?: string) => {
+    const doSearch = (s: string, g: string, i: string, gov?: string, jc?: string) => {
         router.get(route('trainers.index'), {
             search: s || undefined,
             gender: g || undefined,
             is_internal: i || undefined,
             government: gov || undefined,
+            job_category: jc || undefined,
         }, { preserveState: true, preserveScroll: true });
     };
 
@@ -177,37 +183,47 @@ export default function Index({ trainers, filters, trainer }: Props) {
     const handleSearchChange = (val: string) => {
         setSearch(val);
         if (searchTimer) clearTimeout(searchTimer);
-        setSearchTimer(setTimeout(() => doSearch(val, genderFilter, internalFilter, governmentFilter), 400));
+        setSearchTimer(setTimeout(() => doSearch(val, genderFilter, internalFilter, governmentFilter, jobCategoryFilter), 400));
     };
 
     const handleGenderChange = (val: string) => {
         setGenderFilter(val);
-        doSearch(search, val, internalFilter, governmentFilter);
+        doSearch(search, val, internalFilter, governmentFilter, jobCategoryFilter);
     };
 
     const clearGender = () => {
         setGenderFilter('');
-        doSearch(search, '', internalFilter, governmentFilter);
+        doSearch(search, '', internalFilter, governmentFilter, jobCategoryFilter);
     };
 
     const handleInternalChange = (val: string) => {
         setInternalFilter(val);
-        doSearch(search, genderFilter, val, governmentFilter);
+        doSearch(search, genderFilter, val, governmentFilter, jobCategoryFilter);
     };
 
     const clearInternal = () => {
         setInternalFilter('');
-        doSearch(search, genderFilter, '', governmentFilter);
+        doSearch(search, genderFilter, '', governmentFilter, jobCategoryFilter);
     };
 
     const handleGovernmentChange = (val: string) => {
         setGovernmentFilter(val);
-        doSearch(search, genderFilter, internalFilter, val);
+        doSearch(search, genderFilter, internalFilter, val, jobCategoryFilter);
     };
 
     const clearGovernment = () => {
         setGovernmentFilter('');
-        doSearch(search, genderFilter, internalFilter, '');
+        doSearch(search, genderFilter, internalFilter, '', jobCategoryFilter);
+    };
+
+    const handleJobCategoryChange = (val: string) => {
+        setJobCategoryFilter(val);
+        doSearch(search, genderFilter, internalFilter, governmentFilter, val);
+    };
+
+    const clearJobCategory = () => {
+        setJobCategoryFilter('');
+        doSearch(search, genderFilter, internalFilter, governmentFilter, '');
     };
 
     const handleViewTrainer = (t: Trainer) => {
@@ -321,18 +337,19 @@ export default function Index({ trainers, filters, trainer }: Props) {
                     </div>
                     <div className="relative">
                         <select
-                            value={governmentFilter}
-                            onChange={(e) => handleGovernmentChange(e.target.value)}
+                            value={jobCategoryFilter}
+                            onChange={(e) => handleJobCategoryChange(e.target.value)}
                             className="px-4 py-2.5 pl-10 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all appearance-none"
                         >
                             <option value="">الفئة الوظيفية</option>
-                            <option value="1">منتسبو المدارس</option>
-                            <option value="0">منتسبو الوزارة</option>
+                            {jobCategories.map((jc) => (
+                                <option key={jc.value} value={jc.value}>{jc.label}</option>
+                            ))}
                         </select>
-                        {governmentFilter && (
+                        {jobCategoryFilter && (
                             <button
                                 type="button"
-                                onClick={clearGovernment}
+                                onClick={clearJobCategory}
                                 className="absolute left-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors"
                             >
                                 <X className="h-4 w-4" />
@@ -391,8 +408,8 @@ export default function Index({ trainers, filters, trainer }: Props) {
                                 <Badge variant={t.gender === 'male' ? 'info' : 'danger'}>
                                     {t.gender === 'male' ? 'ذكر' : 'أنثى'}
                                 </Badge>
-                                {t.is_government_employee && (
-                                    <Badge variant="info">منتسبو المدارس الحكومية</Badge>
+                                {t.job_category && (
+                                    <Badge variant="info">{t.job_category}</Badge>
                                 )}
                                 {t.nationality_category && (
                                     <Badge variant={t.nationality_category === 'قطري' ? 'success' : 'default'}>
@@ -665,6 +682,21 @@ export default function Index({ trainers, filters, trainer }: Props) {
                                     rows={2}
                                 />
                             </div>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-4">
+                                <Select
+                                    label="الفئة الوظيفية"
+                                    value={form.data.job_category}
+                                    onChange={(e) => {
+                                        form.setData('job_category', e.target.value);
+                                        form.setData('is_government_employee', e.target.value === 'منتسبو المدارس الحكومية');
+                                    }}
+                                >
+                                    <option value="">-- اختر الفئة --</option>
+                                    {jobCategories.map((jc) => (
+                                        <option key={jc.value} value={jc.value}>{jc.label}</option>
+                                    ))}
+                                </Select>
+                            </div>
                             <div className="flex items-center gap-4 mt-4">
                                 <label className="flex items-center gap-2 cursor-pointer group">
                                     <input
@@ -674,15 +706,6 @@ export default function Index({ trainers, filters, trainer }: Props) {
                                         className="w-4 h-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
                                     />
                                     <span className="text-sm text-slate-700 group-hover:text-slate-900">نشط</span>
-                                </label>
-                                <label className="flex items-center gap-2 cursor-pointer group">
-                                    <input
-                                        type="checkbox"
-                                        checked={form.data.is_government_employee}
-                                        onChange={(e) => form.setData('is_government_employee', e.target.checked)}
-                                        className="w-4 h-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
-                                    />
-                                    <span className="text-sm text-slate-700 group-hover:text-slate-900">منتسبو المدارس الحكومية</span>
                                 </label>
                             </div>
                         </div>
