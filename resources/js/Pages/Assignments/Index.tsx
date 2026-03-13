@@ -64,6 +64,7 @@ interface Assignment {
 interface Props {
     assignments: {
         data: Assignment[];
+        total: number;
         links: Array<{ url: string | null; label: string; active: boolean }>;
     };
     trainers: Trainer[];
@@ -136,8 +137,8 @@ export default function Index({ assignments, trainers, programs, assignmentTypes
         setSelectedPackageId(a.package_id);
         setSelectedGroupIds(a.groups.map(g => g.id));
         setAssignmentType(a.assignment_type);
-        setStartDate(a.start_date || '');
-        setEndDate(a.end_date || '');
+        setStartDate(a.start_date ? a.start_date.substring(0, 10) : '');
+        setEndDate(a.end_date ? a.end_date.substring(0, 10) : '');
         setNotes(a.notes || '');
         setShowForm(true);
     };
@@ -193,7 +194,7 @@ export default function Index({ assignments, trainers, programs, assignmentTypes
             <Head title="التكليفات" />
 
             <PageHeader
-                title="التكليفات"
+                title={<>التكليفات <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-teal-100 text-teal-700 mr-2">{assignments.total}</span></>}
                 description="إدارة تكليفات المدربين"
                 action={
                     <Button icon={<Plus className="h-4 w-4" />} onClick={openCreateForm}>
@@ -281,8 +282,8 @@ export default function Index({ assignments, trainers, programs, assignmentTypes
                                             <Badge variant="primary">{a.assignment_type}</Badge>
                                         </td>
                                         <td className="px-4 py-3 text-slate-600 text-xs">
-                                            {a.start_date && <div>من: {a.start_date}</div>}
-                                            {a.end_date && <div>إلى: {a.end_date}</div>}
+                                            {a.start_date && <div>من: {a.start_date.substring(0, 10)}</div>}
+                                            {a.end_date && <div>إلى: {a.end_date.substring(0, 10)}</div>}
                                         </td>
                                         <td className="px-4 py-3">
                                             <div className="flex items-center justify-center gap-1">

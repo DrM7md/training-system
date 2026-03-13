@@ -3,7 +3,7 @@ import { Link } from '@inertiajs/react';
 import { ChevronLeft } from 'lucide-react';
 
 interface PageHeaderProps {
-    title: string;
+    title: ReactNode;
     description?: string;
     action?: ReactNode;
     breadcrumbs?: Array<{ label: string; href?: string }>;
