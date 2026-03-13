@@ -35,7 +35,7 @@ export default function Print({ assignment, organizationName, organizationLogo }
     const a = assignment;
     const cellStyle = { border: '1.5px solid #94a3b8', padding: '8px 12px', fontSize: '13px', color: '#1e293b' };
     const headerCellStyle = { ...cellStyle, backgroundColor: '#f1f5f9', fontWeight: 'bold' as const, fontSize: '12px', color: '#475569' };
-    const sectionHeaderStyle = { backgroundColor: '#1e40af', color: 'white', textAlign: 'center' as const, padding: '8px', fontSize: '14px', fontWeight: 'bold' as const, border: '1.5px solid #1e3a8a' };
+    const sectionHeader = (bg: string) => ({ backgroundColor: bg, color: 'white', textAlign: 'center' as const, padding: '8px', fontSize: '14px', fontWeight: 'bold' as const, border: `1.5px solid ${bg}` });
 
     return (
         <>
@@ -85,7 +85,7 @@ export default function Print({ assignment, organizationName, organizationLogo }
                 <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '16px' }}>
                     <tbody>
                         <tr>
-                            <td colSpan={4} style={sectionHeaderStyle}>بيانات المكلف</td>
+                            <td colSpan={4} style={sectionHeader('rgb(137, 20, 60)')}>بيانات المكلف</td>
                         </tr>
                         <tr>
                             <td style={headerCellStyle}>اسم المكلف</td>
@@ -106,7 +106,7 @@ export default function Print({ assignment, organizationName, organizationLogo }
                 <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '16px' }}>
                     <tbody>
                         <tr>
-                            <td colSpan={4} style={sectionHeaderStyle}>بيانات البرنامج التدريبي</td>
+                            <td colSpan={4} style={sectionHeader('rgb(15, 66, 96)')}>بيانات البرنامج التدريبي</td>
                         </tr>
                         <tr>
                             <td style={headerCellStyle}>عنوان البرنامج التدريبي</td>
@@ -139,7 +139,7 @@ export default function Print({ assignment, organizationName, organizationLogo }
                 <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '16px' }}>
                     <tbody>
                         <tr>
-                            <td style={sectionHeaderStyle}>تعليمات مهمة</td>
+                            <td style={sectionHeader('rgb(18, 155, 130)')}>تعليمات مهمة</td>
                         </tr>
                         <tr>
                             <td style={{ ...cellStyle, lineHeight: '2', fontSize: '12px' }}>
@@ -172,7 +172,7 @@ export default function Print({ assignment, organizationName, organizationLogo }
                 <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '16px' }}>
                     <tbody>
                         <tr>
-                            <td colSpan={4} style={sectionHeaderStyle}>اعتماد المكلف ومدير جهة عمله</td>
+                            <td colSpan={4} style={sectionHeader('rgb(65, 148, 179)')}>اعتماد المكلف ومدير جهة عمله</td>
                         </tr>
                         <tr>
                             <td style={headerCellStyle}>اسم المدرب</td>
@@ -196,7 +196,7 @@ export default function Print({ assignment, organizationName, organizationLogo }
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <tbody>
                         <tr>
-                            <td colSpan={4} style={sectionHeaderStyle}>اعتماد مركز التدريب والتطوير</td>
+                            <td colSpan={4} style={sectionHeader('rgb(162, 145, 96)')}>اعتماد مركز التدريب والتطوير</td>
                         </tr>
                         <tr>
                             <td style={{ ...headerCellStyle, textAlign: 'center', width: '25%' }}>المشرف</td>
