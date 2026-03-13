@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\School;
+use App\Models\AcademicYear;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -10,7 +11,10 @@ class SchoolController extends Controller
 {
     public function index(Request $request)
     {
+        $currentYear = AcademicYear::current();
+
         $schools = School::withCount(['employees', 'trainees'])
+            ->where('academic_year_id', $currentYear?->id)
             ->when($request->search, fn($q, $s) => $q->where('name', 'like', "%{$s}%"))
             ->when($request->type, fn($q, $t) => $q->where('type', $t))
             ->orderBy('name')
@@ -20,6 +24,7 @@ class SchoolController extends Controller
         return Inertia::render('Schools/Index', [
             'schools' => $schools,
             'filters' => $request->only(['search', 'type']),
+            'currentYear' => $currentYear ? $currentYear->name : null,
         ]);
     }
 
@@ -27,54 +32,35 @@ class SchoolController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'code' => 'nullable|string|max:50|unique:schools,code',
-            'type' => 'required|in:male,female,mixed',
+            'education_level' => 'nullable|string|max:255',
+            'type' => 'required|in:male,female',
             'district' => 'nullable|string|max:255',
-            'phone' => 'nullable|string|max:20',
+            'principal_name' => 'nullable|string|max:255',
+            'phone' => 'nullable|string|max:100',
+            'landline' => 'nullable|string|max:100',
             'email' => 'nullable|email|max:255',
-            'address' => 'nullable|string',
             'is_active' => 'boolean',
         ]);
+
+        $currentYear = AcademicYear::current();
+        $validated['academic_year_id'] = $currentYear?->id;
 
         School::create($validated);
 
         return back()->with('success', 'تم إضافة المدرسة بنجاح');
     }
 
-    public function bulkStore(Request $request)
-    {
-        $request->validate([
-            'names' => 'required|string',
-            'type' => 'required|in:male,female,mixed',
-        ]);
-
-        $names = array_filter(array_map('trim', explode("\n", $request->names)));
-        $count = 0;
-
-        foreach ($names as $name) {
-            if ($name && !School::where('name', $name)->exists()) {
-                School::create([
-                    'name' => $name,
-                    'type' => $request->type,
-                    'is_active' => true,
-                ]);
-                $count++;
-            }
-        }
-
-        return back()->with('success', "تم إضافة {$count} مدرسة بنجاح");
-    }
-
     public function update(Request $request, School $school)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'code' => 'nullable|string|max:50|unique:schools,code,' . $school->id,
-            'type' => 'required|in:male,female,mixed',
+            'education_level' => 'nullable|string|max:255',
+            'type' => 'required|in:male,female',
             'district' => 'nullable|string|max:255',
-            'phone' => 'nullable|string|max:20',
+            'principal_name' => 'nullable|string|max:255',
+            'phone' => 'nullable|string|max:100',
+            'landline' => 'nullable|string|max:100',
             'email' => 'nullable|email|max:255',
-            'address' => 'nullable|string',
             'is_active' => 'boolean',
         ]);
 

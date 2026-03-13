@@ -1,26 +1,28 @@
 import AuthenticatedLayout from '@/Components/Layout/AuthenticatedLayout';
 import { Head, router, useForm } from '@inertiajs/react';
-import { useState } from 'react';
-import { Plus, Edit2, Trash2, School, Search, Users, ListPlus, GraduationCap, X } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Plus, Edit2, Trash2, School, Search, Users, GraduationCap, X, Download, Upload, FileSpreadsheet } from 'lucide-react';
 import Card from '@/Components/UI/Card';
 import Button from '@/Components/UI/Button';
 import Badge from '@/Components/UI/Badge';
 import PageHeader from '@/Components/UI/PageHeader';
 import FormModal from '@/Components/UI/FormModal';
 import DeleteModal from '@/Components/UI/DeleteModal';
+import Modal from '@/Components/UI/Modal';
 import Input from '@/Components/UI/Input';
 import Select from '@/Components/UI/Select';
-import Textarea from '@/Components/UI/Textarea';
 
 interface SchoolType {
     id: number;
     name: string;
     code: string | null;
     type: string;
+    education_level: string | null;
     district: string | null;
+    principal_name: string | null;
     phone: string | null;
+    landline: string | null;
     email: string | null;
-    address: string | null;
     is_active: boolean;
     employees_count: number;
     trainees_count: number;
@@ -29,6 +31,7 @@ interface SchoolType {
 interface Props {
     schools: { data: SchoolType[]; current_page: number; last_page: number };
     filters: { search?: string; type?: string };
+    currentYear: string | null;
 }
 
 const typeOptions = [
@@ -39,40 +42,36 @@ const typeOptions = [
 const typeLabels: Record<string, string> = {
     male: 'بنين',
     female: 'بنات',
-    mixed: 'مختلط',
 };
 
-export default function Index({ schools, filters }: Props) {
+export default function Index({ schools, filters, currentYear }: Props) {
     const [showForm, setShowForm] = useState(false);
-    const [showBulkForm, setShowBulkForm] = useState(false);
+    const [showImport, setShowImport] = useState(false);
     const [editing, setEditing] = useState<SchoolType | null>(null);
     const [deleting, setDeleting] = useState<SchoolType | null>(null);
     const [search, setSearch] = useState(filters.search || '');
     const [typeFilter, setTypeFilter] = useState(filters.type || '');
-
-    const bulkForm = useForm({
-        names: '',
-        type: 'male' as string,
-    });
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const importForm = useForm<{ file: File | null; mode: string }>({ file: null, mode: 'skip' });
 
     const initialData = editing
         ? {
               name: editing.name,
-              code: editing.code || '',
+              education_level: editing.education_level || '',
               type: editing.type,
               district: editing.district || '',
+              principal_name: editing.principal_name || '',
               phone: editing.phone || '',
+              landline: editing.landline || '',
               email: editing.email || '',
-              address: editing.address || '',
               is_active: editing.is_active,
           }
-        : { name: '', code: '', type: 'male', district: '', phone: '', email: '', address: '', is_active: true };
+        : { name: '', education_level: '', type: 'male', district: '', principal_name: '', phone: '', landline: '', email: '', is_active: true };
 
     const doSearch = (s: string, t: string) => {
         router.get(route('schools.index'), { search: s || undefined, type: t || undefined }, { preserveState: true, preserveScroll: true });
     };
 
-    // بحث تلقائي بعد التوقف عن الكتابة
     const [searchTimer, setSearchTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
     const handleSearchChange = (val: string) => {
         setSearch(val);
@@ -90,13 +89,16 @@ export default function Index({ schools, filters }: Props) {
         doSearch(search, '');
     };
 
-
-    const handleBulkSubmit = (e: React.FormEvent) => {
+    const handleImportSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        bulkForm.post(route('schools.bulk-store'), {
+        if (!importForm.data.file) return;
+
+        importForm.post(route('import.schools'), {
+            forceFormData: true,
             onSuccess: () => {
-                setShowBulkForm(false);
-                bulkForm.reset();
+                setShowImport(false);
+                importForm.reset();
+                if (fileInputRef.current) fileInputRef.current.value = '';
             },
         });
     };
@@ -107,12 +109,20 @@ export default function Index({ schools, filters }: Props) {
 
             <PageHeader
                 title="المدارس"
-                description="إدارة قائمة المدارس"
+                description={currentYear ? `العام الدراسي: ${currentYear}` : 'إدارة قائمة المدارس'}
                 action={
                     <div className="flex items-center gap-2">
-                        <Button variant="secondary" icon={<ListPlus className="h-4 w-4" />} onClick={() => setShowBulkForm(true)}>
-                            إضافة جماعية
+                        <a href={route('export.schools-template')} className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-purple-700 bg-purple-50 border border-purple-200 rounded-xl hover:bg-purple-100 transition-colors">
+                            <FileSpreadsheet className="h-4 w-4" />
+                            تحميل القالب
+                        </a>
+                        <Button variant="secondary" icon={<Upload className="h-4 w-4" />} onClick={() => setShowImport(true)}>
+                            استيراد
                         </Button>
+                        <a href={route('export.schools')} className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl hover:bg-emerald-100 transition-colors">
+                            <Download className="h-4 w-4" />
+                            تصدير
+                        </a>
                         <Button icon={<Plus className="h-4 w-4" />} onClick={() => setShowForm(true)}>
                             إضافة مدرسة
                         </Button>
@@ -121,7 +131,7 @@ export default function Index({ schools, filters }: Props) {
             />
 
             <Card className="mb-6">
-                <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex flex-col sm:flex-row gap-4 items-center">
                     <div className="flex-1 relative">
                         <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
                         <input
@@ -153,6 +163,7 @@ export default function Index({ schools, filters }: Props) {
                             </button>
                         )}
                     </div>
+                    <Badge variant="default">{schools.data.length} مدرسة</Badge>
                 </div>
             </Card>
 
@@ -162,17 +173,21 @@ export default function Index({ schools, filters }: Props) {
                         <thead className="bg-gradient-to-l from-slate-50 to-slate-100/50 border-b border-slate-200">
                             <tr>
                                 <th className="px-4 py-3.5 text-right text-xs font-bold text-slate-600 uppercase tracking-wide">المدرسة</th>
-                                <th className="px-4 py-3.5 text-right text-xs font-bold text-slate-600 uppercase tracking-wide">النوع</th>
+                                <th className="px-4 py-3.5 text-right text-xs font-bold text-slate-600 uppercase tracking-wide">المرحلة</th>
+                                <th className="px-4 py-3.5 text-right text-xs font-bold text-slate-600 uppercase tracking-wide">الفئة</th>
+                                <th className="px-4 py-3.5 text-right text-xs font-bold text-slate-600 uppercase tracking-wide">المنطقة</th>
+                                <th className="px-4 py-3.5 text-right text-xs font-bold text-slate-600 uppercase tracking-wide">المدير</th>
+                                <th className="px-4 py-3.5 text-right text-xs font-bold text-slate-600 uppercase tracking-wide">الجوال</th>
+                                <th className="px-4 py-3.5 text-right text-xs font-bold text-slate-600 uppercase tracking-wide">الهاتف</th>
                                 <th className="px-4 py-3.5 text-right text-xs font-bold text-slate-600 uppercase tracking-wide">الموظفين</th>
                                 <th className="px-4 py-3.5 text-right text-xs font-bold text-slate-600 uppercase tracking-wide">المتدربين</th>
-                                <th className="px-4 py-3.5 text-right text-xs font-bold text-slate-600 uppercase tracking-wide">الحالة</th>
                                 <th className="px-4 py-3.5 text-right text-xs font-bold text-slate-600 uppercase tracking-wide">الإجراءات</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {schools.data.length === 0 ? (
                                 <tr>
-                                    <td colSpan={6} className="px-4 py-12 text-center text-slate-500">
+                                    <td colSpan={10} className="px-4 py-12 text-center text-slate-500">
                                         <School className="h-12 w-12 mx-auto text-slate-300 mb-3" />
                                         <p className="font-medium">لا توجد مدارس</p>
                                     </td>
@@ -180,37 +195,37 @@ export default function Index({ schools, filters }: Props) {
                             ) : (
                                 schools.data.map((school) => (
                                     <tr key={school.id} className="hover:bg-slate-50/50 transition-colors">
-                                        <td className="px-4 py-4">
+                                        <td className="px-4 py-3">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center shadow-sm">
-                                                    <School className="h-5 w-5 text-indigo-600" />
+                                                <div className="w-9 h-9 rounded-lg bg-indigo-50 flex items-center justify-center flex-shrink-0">
+                                                    <School className="h-4 w-4 text-indigo-600" />
                                                 </div>
-                                                <span className="font-semibold text-slate-800">{school.name}</span>
+                                                <span className="font-semibold text-slate-800 text-sm">{school.name}</span>
                                             </div>
                                         </td>
-                                        <td className="px-4 py-4">
-                                            <Badge variant={school.type === 'male' ? 'info' : school.type === 'female' ? 'danger' : 'default'}>
-                                                {typeLabels[school.type]}
+                                        <td className="px-4 py-3 text-sm text-slate-600">{school.education_level || '-'}</td>
+                                        <td className="px-4 py-3">
+                                            <Badge variant={school.type === 'male' ? 'info' : 'danger'}>
+                                                {typeLabels[school.type] || school.type}
                                             </Badge>
                                         </td>
-                                        <td className="px-4 py-4">
-                                            <span className="inline-flex items-center justify-center gap-1 px-2.5 py-1 bg-slate-100 rounded-lg text-sm">
-                                                <Users className="h-4 w-4 text-slate-500" />
+                                        <td className="px-4 py-3 text-sm text-slate-600">{school.district || '-'}</td>
+                                        <td className="px-4 py-3 text-sm text-slate-600">{school.principal_name || '-'}</td>
+                                        <td className="px-4 py-3 text-sm text-slate-600 font-mono" dir="ltr">{school.phone || '-'}</td>
+                                        <td className="px-4 py-3 text-sm text-slate-600 font-mono" dir="ltr">{school.landline || '-'}</td>
+                                        <td className="px-4 py-3">
+                                            <span className="inline-flex items-center justify-center gap-1 px-2 py-0.5 bg-slate-100 rounded-lg text-xs">
+                                                <Users className="h-3.5 w-3.5 text-slate-500" />
                                                 <span className="font-semibold text-slate-700">{school.employees_count}</span>
                                             </span>
                                         </td>
-                                        <td className="px-4 py-4">
-                                            <span className="inline-flex items-center justify-center gap-1 px-2.5 py-1 bg-teal-50 rounded-lg text-sm">
-                                                <GraduationCap className="h-4 w-4 text-teal-600" />
+                                        <td className="px-4 py-3">
+                                            <span className="inline-flex items-center justify-center gap-1 px-2 py-0.5 bg-teal-50 rounded-lg text-xs">
+                                                <GraduationCap className="h-3.5 w-3.5 text-teal-600" />
                                                 <span className="font-semibold text-teal-700">{school.trainees_count}</span>
                                             </span>
                                         </td>
-                                        <td className="px-4 py-4">
-                                            <Badge variant={school.is_active ? 'success' : 'danger'}>
-                                                {school.is_active ? 'نشطة' : 'غير نشطة'}
-                                            </Badge>
-                                        </td>
-                                        <td className="px-4 py-4">
+                                        <td className="px-4 py-3">
                                             <div className="flex items-center gap-1">
                                                 <button
                                                     onClick={() => {
@@ -260,15 +275,16 @@ export default function Index({ schools, filters }: Props) {
                                 required
                             />
                             <Input
-                                label="رمز المدرسة"
-                                value={form.data.code}
-                                onChange={(e) => form.setData('code', e.target.value)}
-                                error={form.errors.code}
+                                label="المرحلة الدراسية"
+                                value={form.data.education_level}
+                                onChange={(e) => form.setData('education_level', e.target.value)}
+                                error={form.errors.education_level}
+                                placeholder="مثال: إعدادي، ثانوي"
                             />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <Select
-                                label="النوع"
+                                label="فئة المدرسة"
                                 value={form.data.type}
                                 onChange={(e) => form.setData('type', e.target.value)}
                                 error={form.errors.type}
@@ -279,33 +295,40 @@ export default function Index({ schools, filters }: Props) {
                                 ))}
                             </Select>
                             <Input
-                                label="المنطقة"
+                                label="المنطقة الجغرافية"
                                 value={form.data.district}
                                 onChange={(e) => form.setData('district', e.target.value)}
                                 error={form.errors.district}
                             />
                         </div>
+                        <Input
+                            label="اسم مدير المدرسة"
+                            value={form.data.principal_name}
+                            onChange={(e) => form.setData('principal_name', e.target.value)}
+                            error={form.errors.principal_name}
+                        />
                         <div className="grid grid-cols-2 gap-4">
                             <Input
-                                label="رقم الهاتف"
+                                label="رقم الجوال"
                                 value={form.data.phone}
                                 onChange={(e) => form.setData('phone', e.target.value)}
                                 error={form.errors.phone}
+                                placeholder="مثال: 55512345"
                             />
                             <Input
-                                label="البريد الإلكتروني"
-                                type="email"
-                                value={form.data.email}
-                                onChange={(e) => form.setData('email', e.target.value)}
-                                error={form.errors.email}
+                                label="رقم الهاتف"
+                                value={form.data.landline}
+                                onChange={(e) => form.setData('landline', e.target.value)}
+                                error={form.errors.landline}
+                                placeholder="مثال: 40123248 - 40123249"
                             />
                         </div>
-                        <Textarea
-                            label="العنوان"
-                            value={form.data.address}
-                            onChange={(e) => form.setData('address', e.target.value)}
-                            error={form.errors.address}
-                            rows={2}
+                        <Input
+                            label="البريد الإلكتروني"
+                            type="email"
+                            value={form.data.email}
+                            onChange={(e) => form.setData('email', e.target.value)}
+                            error={form.errors.email}
                         />
                         <label className="flex items-center gap-2 cursor-pointer group">
                             <input
@@ -320,51 +343,130 @@ export default function Index({ schools, filters }: Props) {
                 )}
             </FormModal>
 
-            {/* Bulk Add Modal */}
-            {showBulkForm && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center">
-                    <button type="button" className="fixed inset-0 bg-black/50 cursor-default" onClick={() => setShowBulkForm(false)} aria-label="إغلاق" />
-                    <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 p-6">
-                        <h3 className="text-lg font-bold text-slate-800 mb-4">إضافة مدارس جماعية</h3>
-                        <form onSubmit={handleBulkSubmit}>
-                            <div className="space-y-4">
-                                <Select
-                                    label="النوع"
-                                    value={bulkForm.data.type}
-                                    onChange={(e) => bulkForm.setData('type', e.target.value)}
-                                    error={bulkForm.errors.type}
-                                    required
-                                >
-                                    {typeOptions.map((t) => (
-                                        <option key={t.value} value={t.value}>{t.label}</option>
-                                    ))}
-                                </Select>
-                                <Textarea
-                                    label="أسماء المدارس (كل مدرسة في سطر)"
-                                    value={bulkForm.data.names}
-                                    onChange={(e) => bulkForm.setData('names', e.target.value)}
-                                    error={bulkForm.errors.names}
-                                    rows={10}
-                                    placeholder="اكتب اسم كل مدرسة في سطر جديد"
-                                    required
-                                />
-                            </div>
-                            <div className="flex items-center justify-end gap-3 mt-6">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowBulkForm(false)}
-                                    className="px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-xl transition-colors"
-                                >
-                                    إلغاء
-                                </button>
-                                <Button type="submit" disabled={bulkForm.processing}>
-                                    {bulkForm.processing ? 'جاري الإضافة...' : 'إضافة الكل'}
-                                </Button>
-                            </div>
-                        </form>
+            {/* Import Modal */}
+            <Modal
+                open={showImport}
+                onClose={() => {
+                    setShowImport(false);
+                    importForm.reset();
+                    if (fileInputRef.current) fileInputRef.current.value = '';
+                }}
+                title="استيراد المدارس من Excel"
+            >
+                <form onSubmit={handleImportSubmit} className="space-y-6">
+                    <div className="p-4 bg-orange-50 rounded-xl border border-orange-100">
+                        <h4 className="font-semibold text-orange-800 mb-2 flex items-center gap-2">
+                            <FileSpreadsheet className="h-5 w-5" />
+                            خطوات الاستيراد
+                        </h4>
+                        <ol className="text-sm text-orange-700 space-y-1 list-decimal mr-5">
+                            <li>قم بتحميل <a href={route('export.schools-template')} className="underline font-medium hover:text-orange-900">قالب Excel</a> أولاً</li>
+                            <li>املأ البيانات في القالب (لا تغير صف العناوين)</li>
+                            <li>احفظ الملف بصيغة xlsx</li>
+                            <li>ارفع الملف هنا</li>
+                        </ol>
+                        {currentYear && (
+                            <p className="mt-2 text-xs text-orange-600 font-medium">سيتم ربط المدارس بالعام الدراسي الحالي: {currentYear}</p>
+                        )}
                     </div>
-                </div>
-            )}
+
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">عند وجود بيانات مكررة</label>
+                        <div className="grid grid-cols-2 gap-3">
+                            <label
+                                className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                                    importForm.data.mode === 'skip'
+                                        ? 'border-teal-500 bg-teal-50'
+                                        : 'border-slate-200 hover:border-slate-300'
+                                }`}
+                            >
+                                <input
+                                    type="radio"
+                                    name="mode"
+                                    value="skip"
+                                    checked={importForm.data.mode === 'skip'}
+                                    onChange={() => importForm.setData('mode', 'skip')}
+                                    className="text-teal-600 focus:ring-teal-500"
+                                />
+                                <div>
+                                    <p className="text-sm font-semibold text-slate-800">تخطي الموجودة</p>
+                                    <p className="text-xs text-slate-500">إضافة الجديدة فقط وتجاهل المكرر</p>
+                                </div>
+                            </label>
+                            <label
+                                className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                                    importForm.data.mode === 'update'
+                                        ? 'border-amber-500 bg-amber-50'
+                                        : 'border-slate-200 hover:border-slate-300'
+                                }`}
+                            >
+                                <input
+                                    type="radio"
+                                    name="mode"
+                                    value="update"
+                                    checked={importForm.data.mode === 'update'}
+                                    onChange={() => importForm.setData('mode', 'update')}
+                                    className="text-amber-600 focus:ring-amber-500"
+                                />
+                                <div>
+                                    <p className="text-sm font-semibold text-slate-800">تحديث الموجودة</p>
+                                    <p className="text-xs text-slate-500">استبدال البيانات القديمة بالجديدة</p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">اختر ملف Excel</label>
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept=".xlsx,.xls,.csv"
+                            onChange={(e) => {
+                                const file = e.target.files?.[0] || null;
+                                importForm.setData('file', file);
+                            }}
+                            className="w-full text-sm text-slate-600 file:ml-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 border border-slate-200 rounded-xl cursor-pointer"
+                        />
+                        {importForm.errors.file && (
+                            <p className="mt-1 text-sm text-red-600">{importForm.errors.file}</p>
+                        )}
+                    </div>
+
+                    <div className="flex justify-end gap-3">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setShowImport(false);
+                                importForm.reset();
+                            }}
+                            className="px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-xl transition-colors"
+                        >
+                            إلغاء
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={!importForm.data.file || importForm.processing}
+                            className="px-6 py-2 text-sm font-medium bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                        >
+                            {importForm.processing ? (
+                                <>
+                                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                    </svg>
+                                    جاري الاستيراد...
+                                </>
+                            ) : (
+                                <>
+                                    <Upload className="h-4 w-4" />
+                                    استيراد
+                                </>
+                            )}
+                        </button>
+                    </div>
+                </form>
+            </Modal>
 
             <DeleteModal
                 open={!!deleting}

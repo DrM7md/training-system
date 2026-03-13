@@ -26,6 +26,8 @@ use App\Exports\PackagesExport;
 use App\Exports\GroupsExport;
 use App\Exports\TrainersExport;
 use App\Exports\TrainersTemplateExport;
+use App\Exports\SchoolsExport;
+use App\Exports\SchoolsTemplateExport;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Route;
 
@@ -60,7 +62,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('schedule/sessions/{session}/move', [ScheduleController::class, 'moveSession'])->name('schedule.sessions.move');
 
     Route::resource('schools', SchoolController::class)->except(['create', 'edit', 'show']);
-    Route::post('schools/bulk', [SchoolController::class, 'bulkStore'])->name('schools.bulk-store');
 
     Route::resource('employees', EmployeeController::class)->except(['create', 'edit']);
 
@@ -88,6 +89,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('export/trainers', fn() => Excel::download(new TrainersExport, 'المدربين.xlsx'))->name('export.trainers');
     Route::get('export/trainers-template', fn() => Excel::download(new TrainersTemplateExport, 'قالب_استيراد_المدربين.xlsx'))->name('export.trainers-template');
     Route::post('import/trainers', [ImportController::class, 'trainers'])->name('import.trainers');
+    Route::get('export/schools', fn() => Excel::download(new SchoolsExport, 'المدارس.xlsx'))->name('export.schools');
+    Route::get('export/schools-template', fn() => Excel::download(new SchoolsTemplateExport, 'قالب_استيراد_المدارس.xlsx'))->name('export.schools-template');
+    Route::post('import/schools', [ImportController::class, 'schools'])->name('import.schools');
 
     Route::get('settings', [SettingController::class, 'index'])->name('settings.index');
     Route::post('settings', [SettingController::class, 'update'])->name('settings.update');
