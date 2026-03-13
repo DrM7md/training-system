@@ -1,0 +1,1 @@
+import{c as o}from"./graduation-cap-Dq-An_eO.js";const c=[["path",{d:"m18 15-6-6-6 6",key:"153udz"}]],n=o("chevron-up",c);export{n as C};

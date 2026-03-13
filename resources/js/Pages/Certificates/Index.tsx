@@ -61,6 +61,7 @@ export default function Index({ templates, logs, assignments, filters, currentYe
     const [showTemplateForm, setShowTemplateForm] = useState(false);
     const [editingTemplate, setEditingTemplate] = useState<CertificateTemplate | null>(null);
     const [deletingTemplate, setDeletingTemplate] = useState<CertificateTemplate | null>(null);
+    const [deletingLog, setDeletingLog] = useState<CertificateLog | null>(null);
     const [search, setSearch] = useState(filters.search || '');
     const [searchTimer, setSearchTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
 
@@ -371,7 +372,7 @@ export default function Index({ templates, logs, assignments, filters, currentYe
                                             <th className="px-4 py-3.5 text-right text-xs font-bold text-slate-600 uppercase tracking-wide">البرنامج</th>
                                             <th className="px-4 py-3.5 text-right text-xs font-bold text-slate-600 uppercase tracking-wide">بواسطة</th>
                                             <th className="px-4 py-3.5 text-right text-xs font-bold text-slate-600 uppercase tracking-wide">التاريخ</th>
-                                            <th className="px-4 py-3.5 text-center text-xs font-bold text-slate-600 uppercase tracking-wide">تحميل</th>
+                                            <th className="px-4 py-3.5 text-center text-xs font-bold text-slate-600 uppercase tracking-wide">الإجراءات</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100">
@@ -383,14 +384,23 @@ export default function Index({ templates, logs, assignments, filters, currentYe
                                                 <td className="px-4 py-3 text-slate-600">{log.assignment?.program?.name || '-'}</td>
                                                 <td className="px-4 py-3 text-xs text-slate-600">{log.generated_by?.name || '-'}</td>
                                                 <td className="px-4 py-3 text-xs text-slate-600">{log.created_at?.substring(0, 10)}</td>
-                                                <td className="px-4 py-3 text-center">
-                                                    <a
-                                                        href={route('certificates.logs.download', log.id)}
-                                                        className="inline-flex p-2 rounded-lg hover:bg-blue-100 text-blue-600 transition-colors"
-                                                        title="تحميل"
-                                                    >
-                                                        <Download className="h-4 w-4" />
-                                                    </a>
+                                                <td className="px-4 py-3">
+                                                    <div className="flex items-center justify-center gap-1">
+                                                        <a
+                                                            href={route('certificates.logs.download', log.id)}
+                                                            className="p-2 rounded-lg hover:bg-blue-100 text-blue-600 transition-colors"
+                                                            title="تحميل"
+                                                        >
+                                                            <Download className="h-4 w-4" />
+                                                        </a>
+                                                        <button
+                                                            onClick={() => setDeletingLog(log)}
+                                                            className="p-2 rounded-lg hover:bg-red-100 text-red-600 transition-colors"
+                                                            title="حذف"
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))}
@@ -513,6 +523,13 @@ export default function Index({ templates, logs, assignments, filters, currentYe
                 onClose={() => setDeletingTemplate(null)}
                 action={deletingTemplate ? route('certificates.templates.destroy', deletingTemplate.id) : ''}
                 message={`هل أنت متأكد من حذف القالب "${deletingTemplate?.name}"؟`}
+            />
+
+            <DeleteModal
+                open={!!deletingLog}
+                onClose={() => setDeletingLog(null)}
+                action={deletingLog ? route('certificates.logs.destroy', deletingLog.id) : ''}
+                message={`هل أنت متأكد من حذف هذه الشهادة؟`}
             />
         </AuthenticatedLayout>
     );

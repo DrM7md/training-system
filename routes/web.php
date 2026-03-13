@@ -80,6 +80,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('certificates/templates/{template}', [CertificateController::class, 'destroyTemplate'])->name('certificates.templates.destroy');
     Route::post('certificates/generate', [CertificateController::class, 'generate'])->name('certificates.generate');
     Route::get('certificates/logs/{log}/download', [CertificateController::class, 'download'])->name('certificates.logs.download');
+    Route::delete('certificates/logs/{log}', [CertificateController::class, 'destroyLog'])->name('certificates.logs.destroy');
 
     Route::get('export/programs', fn() => Excel::download(new ProgramsExport, 'البرامج_التدريبية.xlsx'))->name('export.programs');
     Route::get('export/packages', fn() => Excel::download(new PackagesExport, 'الحقائب_التدريبية.xlsx'))->name('export.packages');

@@ -177,6 +177,16 @@ class CertificateController extends Controller
         return response()->download(Storage::disk('public')->path($log->file_path), "شهادة_{$trainerName}.docx");
     }
 
+    public function destroyLog(CertificateLog $log)
+    {
+        if ($log->file_path) {
+            Storage::disk('public')->delete($log->file_path);
+        }
+        $log->delete();
+
+        return back()->with('success', 'تم حذف الشهادة بنجاح');
+    }
+
     private function detectPlaceholders(string $filePath): array
     {
         try {
