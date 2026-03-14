@@ -26,7 +26,7 @@ class PackageController extends Controller
             ->when($request->search, fn($q, $s) => $q->where('name', 'like', "%{$s}%"))
             ->when($request->program_id, fn($q, $id) => $q->where('program_id', $id))
             ->orderByDesc('created_at')
-            ->paginate(50)
+            ->paginate(200)
             ->withQueryString();
 
         $programQuery = Program::with('academicYear')->where('is_archived', false);
@@ -54,6 +54,7 @@ class PackageController extends Controller
             'description' => 'nullable|string',
             'hours' => 'required|integer|min:1',
             'days' => 'required|integer|min:1',
+            'training_mode' => 'required|in:in_person,remote,both',
             'supervisor_id' => 'nullable|exists:users,id',
             'auto_create_groups' => 'boolean',
         ]);
@@ -134,6 +135,7 @@ class PackageController extends Controller
             'description' => 'nullable|string',
             'hours' => 'required|integer|min:1',
             'days' => 'required|integer|min:1',
+            'training_mode' => 'required|in:in_person,remote,both',
             'supervisor_id' => 'nullable|exists:users,id',
         ]);
 

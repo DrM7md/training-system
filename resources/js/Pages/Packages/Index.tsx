@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Components/Layout/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
-import { Plus, Edit2, Trash2, Package, Clock, Calendar, Search, ChevronDown, ChevronUp, BookOpen, User, Layers, Eye, Users, Minimize2, Maximize2, X, Download } from 'lucide-react';
+import { Plus, Edit2, Trash2, Package, Clock, Calendar, Search, ChevronDown, ChevronUp, BookOpen, User, Layers, Eye, Users, Minimize2, Maximize2, X, Download, Monitor, Wifi, MonitorSmartphone } from 'lucide-react';
 import Card from '@/Components/UI/Card';
 import Button from '@/Components/UI/Button';
 import Badge from '@/Components/UI/Badge';
@@ -49,6 +49,7 @@ interface PackageItem {
     description: string | null;
     hours: number;
     days: number;
+    training_mode: string;
     supervisor_id: number | null;
     supervisor?: UserType | null;
     program_groups_count: number;
@@ -96,6 +97,12 @@ const genderLabels: Record<string, string> = {
     mixed: 'مختلط',
 };
 
+const trainingModeLabels: Record<string, { label: string; icon: typeof Monitor; variant: 'info' | 'warning' | 'primary' }> = {
+    in_person: { label: 'حضوريًا', icon: Monitor, variant: 'info' },
+    remote: { label: 'عن بعد', icon: Wifi, variant: 'warning' },
+    both: { label: 'حضوريًا وعن بعد', icon: MonitorSmartphone, variant: 'primary' },
+};
+
 export default function Index({ packages, programs, supervisors, halls, filters, hoursPerDay }: Props) {
     const [showForm, setShowForm] = useState(false);
     const [editing, setEditing] = useState<PackageItem | null>(null);
@@ -130,10 +137,11 @@ export default function Index({ packages, programs, supervisors, halls, filters,
               description: editing.description || '',
               hours: editing.hours,
               days: editing.days,
+              training_mode: editing.training_mode || 'in_person',
               supervisor_id: editing.supervisor_id || '',
               auto_create_groups: false,
           }
-        : { program_id: '', name: '', description: '', hours: 5, days: 1, supervisor_id: '', auto_create_groups: true };
+        : { program_id: '', name: '', description: '', hours: 5, days: 1, training_mode: 'in_person', supervisor_id: '', auto_create_groups: true };
 
     const handleEdit = (pkg: PackageItem) => {
         setEditing(pkg);
@@ -372,6 +380,21 @@ export default function Index({ packages, programs, supervisors, halls, filters,
                                                         <Layers className="h-3.5 w-3.5" />
                                                         {pkg.program_groups_count} مجموعة
                                                     </span>
+                                                    {pkg.training_mode && (() => {
+                                                        const mode = trainingModeLabels[pkg.training_mode];
+                                                        if (!mode) return null;
+                                                        const ModeIcon = mode.icon;
+                                                        return (
+                                                            <span className={`flex items-center gap-1 text-xs px-2 py-1 rounded-lg font-medium ${
+                                                                mode.variant === 'info' ? 'bg-sky-100 text-sky-700' :
+                                                                mode.variant === 'warning' ? 'bg-amber-100 text-amber-700' :
+                                                                'bg-violet-100 text-violet-700'
+                                                            }`}>
+                                                                <ModeIcon className="h-3.5 w-3.5" />
+                                                                {mode.label}
+                                                            </span>
+                                                        );
+                                                    })()}
                                                 </div>
 
                                                 {pkg.supervisor && (
@@ -478,6 +501,30 @@ export default function Index({ packages, programs, supervisors, halls, filters,
                                     <input type="hidden" value={form.data.days} />
                                 </div>
                             </div>
+                            <div>
+                                <label className="block text-sm font-semibold text-slate-700 mb-1.5">نمط التدريب <span className="text-red-500">*</span></label>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {Object.entries(trainingModeLabels).map(([value, config]) => {
+                                        const Icon = config.icon;
+                                        const isSelected = form.data.training_mode === value;
+                                        return (
+                                            <button
+                                                key={value}
+                                                type="button"
+                                                onClick={() => form.setData('training_mode', value)}
+                                                className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all text-sm font-medium ${
+                                                    isSelected
+                                                        ? 'border-teal-500 bg-teal-50 text-teal-700'
+                                                        : 'border-slate-200 hover:border-slate-300 text-slate-600'
+                                                }`}
+                                            >
+                                                <Icon className="h-5 w-5" />
+                                                {config.label}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
                             <SearchableSelect
                                 label="المشرف"
                                 value={form.data.supervisor_id}
@@ -554,7 +601,7 @@ export default function Index({ packages, programs, supervisors, halls, filters,
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
                             <div className="p-4 bg-slate-50 rounded-xl text-center">
                                 <Clock className="h-6 w-6 text-slate-500 mx-auto mb-2" />
                                 <p className="text-2xl font-bold text-slate-700">{viewingDetails.hours}</p>
@@ -570,6 +617,29 @@ export default function Index({ packages, programs, supervisors, halls, filters,
                                 <p className="text-2xl font-bold text-emerald-700">{viewingDetails.program_groups_count}</p>
                                 <p className="text-sm text-emerald-600">مجموعة</p>
                             </div>
+                            {(() => {
+                                const mode = trainingModeLabels[viewingDetails.training_mode] || trainingModeLabels.in_person;
+                                const ModeIcon = mode.icon;
+                                return (
+                                    <div className={`p-4 rounded-xl text-center ${
+                                        mode.variant === 'info' ? 'bg-sky-50' :
+                                        mode.variant === 'warning' ? 'bg-amber-50' : 'bg-violet-50'
+                                    }`}>
+                                        <ModeIcon className={`h-6 w-6 mx-auto mb-2 ${
+                                            mode.variant === 'info' ? 'text-sky-600' :
+                                            mode.variant === 'warning' ? 'text-amber-600' : 'text-violet-600'
+                                        }`} />
+                                        <p className={`text-sm font-bold ${
+                                            mode.variant === 'info' ? 'text-sky-700' :
+                                            mode.variant === 'warning' ? 'text-amber-700' : 'text-violet-700'
+                                        }`}>{mode.label}</p>
+                                        <p className={`text-xs ${
+                                            mode.variant === 'info' ? 'text-sky-600' :
+                                            mode.variant === 'warning' ? 'text-amber-600' : 'text-violet-600'
+                                        }`}>نمط التدريب</p>
+                                    </div>
+                                );
+                            })()}
                             <div className="p-4 bg-violet-50 rounded-xl text-center">
                                 <User className="h-6 w-6 text-violet-600 mx-auto mb-2" />
                                 <p className="text-lg font-bold text-violet-700">{viewingDetails.supervisor?.name || '-'}</p>
