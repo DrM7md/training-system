@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Components/Layout/AuthenticatedLayout';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, useForm } from '@inertiajs/react';
 import { useState, useMemo } from 'react';
-import { Plus, Edit2, Trash2, Building2, Users, MapPin, Eye, BookOpen, Calendar, GraduationCap, Search } from 'lucide-react';
+import { Plus, Edit2, Trash2, Building2, Users, MapPin, Eye, BookOpen, Calendar, GraduationCap, Search, Lock, Unlock, X } from 'lucide-react';
 import Card from '@/Components/UI/Card';
 import Button from '@/Components/UI/Button';
 import Badge from '@/Components/UI/Badge';
@@ -30,6 +30,18 @@ interface BookedProgram {
     gender: string;
 }
 
+interface Reservation {
+    id: number;
+    training_hall_id: number;
+    reserved_by: number;
+    purpose: string;
+    start_date: string;
+    end_date: string;
+    notes: string | null;
+    training_hall: { id: number; name: string };
+    reserved_by_user?: { id: number; name: string };
+}
+
 interface TrainingHall {
     id: number;
     name: string;
@@ -40,6 +52,7 @@ interface TrainingHall {
     is_active: boolean;
     program_groups_count: number;
     training_sessions_count: number;
+    reservations_count: number;
     booked_programs?: BookedProgram[];
 }
 
@@ -50,6 +63,7 @@ interface Props {
         last_page: number;
     };
     hall?: TrainingHall;
+    reservations: Reservation[];
 }
 
 const genderPriorityLabels: Record<string, { label: string; variant: 'info' | 'danger' | 'primary' | 'default' }> = {
@@ -72,12 +86,22 @@ const genderLabels: Record<string, string> = {
     mixed: 'مختلط',
 };
 
-export default function Index({ halls, hall }: Props) {
+export default function Index({ halls, hall, reservations }: Props) {
     const [showForm, setShowForm] = useState(false);
     const [editing, setEditing] = useState<TrainingHall | null>(null);
     const [deleting, setDeleting] = useState<TrainingHall | null>(null);
     const [viewing, setViewing] = useState<TrainingHall | null>(hall || null);
     const [search, setSearch] = useState('');
+    const [reservingHall, setReservingHall] = useState<TrainingHall | null>(null);
+    const [showReservations, setShowReservations] = useState(false);
+    const [deletingReservation, setDeletingReservation] = useState<Reservation | null>(null);
+
+    const reserveForm = useForm({
+        purpose: '',
+        start_date: '',
+        end_date: '',
+        notes: '',
+    });
 
     const filteredHalls = useMemo(() => {
         if (!search.trim()) return halls.data;
@@ -120,6 +144,35 @@ export default function Index({ halls, hall }: Props) {
         });
     };
 
+    const handleReserve = (h: TrainingHall) => {
+        setReservingHall(h);
+        reserveForm.reset();
+    };
+
+    const submitReservation = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!reservingHall) return;
+        reserveForm.post(route('training-halls.reserve', reservingHall.id), {
+            preserveScroll: true,
+            onSuccess: () => {
+                setReservingHall(null);
+                reserveForm.reset();
+            },
+        });
+    };
+
+    const handleDeleteReservation = (reservation: Reservation) => {
+        setDeletingReservation(reservation);
+    };
+
+    const confirmDeleteReservation = () => {
+        if (!deletingReservation) return;
+        router.delete(route('hall-reservations.destroy', deletingReservation.id), {
+            preserveScroll: true,
+            onSuccess: () => setDeletingReservation(null),
+        });
+    };
+
     const getGenderPriorityBadge = (priority: string | null) => {
         if (!priority) return <Badge variant="default">لم يحدد</Badge>;
         const config = genderPriorityLabels[priority];
@@ -134,9 +187,23 @@ export default function Index({ halls, hall }: Props) {
                 title="القاعات التدريبية"
                 description={`إدارة القاعات والطاقة الاستيعابية (${halls.data.length} قاعة)`}
                 action={
-                    <Button icon={<Plus className="h-4 w-4" />} onClick={() => setShowForm(true)}>
-                        إضافة قاعة
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button
+                            variant="secondary"
+                            icon={<Lock className="h-4 w-4" />}
+                            onClick={() => setShowReservations(true)}
+                        >
+                            الحجوزات اليدوية
+                            {reservations.length > 0 && (
+                                <span className="mr-1.5 px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded-full text-xs font-bold">
+                                    {reservations.length}
+                                </span>
+                            )}
+                        </Button>
+                        <Button icon={<Plus className="h-4 w-4" />} onClick={() => setShowForm(true)}>
+                            إضافة قاعة
+                        </Button>
+                    </div>
                 }
             />
 
@@ -169,18 +236,28 @@ export default function Index({ halls, hall }: Props) {
                                 <button
                                     onClick={() => handleViewHall(h)}
                                     className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors"
+                                    title="عرض التفاصيل"
                                 >
                                     <Eye className="h-4 w-4" />
                                 </button>
                                 <button
+                                    onClick={() => handleReserve(h)}
+                                    className="p-1.5 rounded-lg hover:bg-amber-100 text-amber-600 transition-colors"
+                                    title="حجز القاعة"
+                                >
+                                    <Lock className="h-4 w-4" />
+                                </button>
+                                <button
                                     onClick={() => handleEdit(h)}
                                     className="p-1.5 rounded-lg hover:bg-teal-100 text-teal-600 transition-colors"
+                                    title="تعديل"
                                 >
                                     <Edit2 className="h-4 w-4" />
                                 </button>
                                 <button
                                     onClick={() => setDeleting(h)}
                                     className="p-1.5 rounded-lg hover:bg-red-100 text-red-600 transition-colors"
+                                    title="حذف"
                                 >
                                     <Trash2 className="h-4 w-4" />
                                 </button>
@@ -219,6 +296,12 @@ export default function Index({ halls, hall }: Props) {
                                 <span className="px-2 py-1 bg-sky-50 text-sky-700 rounded-lg font-medium">
                                     {h.training_sessions_count} جلسة
                                 </span>
+                                {h.reservations_count > 0 && (
+                                    <span className="px-2 py-1 bg-amber-50 text-amber-700 rounded-lg font-medium flex items-center gap-1">
+                                        <Lock className="h-3 w-3" />
+                                        {h.reservations_count} حجز
+                                    </span>
+                                )}
                                 {!h.is_active && (
                                     <Badge variant="danger">غير نشطة</Badge>
                                 )}
@@ -235,6 +318,7 @@ export default function Index({ halls, hall }: Props) {
                 )}
             </div>
 
+            {/* Form Modal - Add/Edit Hall */}
             <FormModal
                 open={showForm}
                 onClose={handleClose}
@@ -301,6 +385,7 @@ export default function Index({ halls, hall }: Props) {
                 )}
             </FormModal>
 
+            {/* Delete Hall Modal */}
             <DeleteModal
                 open={!!deleting}
                 onClose={() => setDeleting(null)}
@@ -308,6 +393,7 @@ export default function Index({ halls, hall }: Props) {
                 message={`هل أنت متأكد من حذف القاعة "${deleting?.name}"؟`}
             />
 
+            {/* View Hall Details Modal */}
             <Modal
                 open={!!viewing}
                 onClose={() => setViewing(null)}
@@ -416,6 +502,151 @@ export default function Index({ halls, hall }: Props) {
                                     <p>لا توجد دورات محجوزة في هذه القاعة</p>
                                 </div>
                             )}
+                        </div>
+                    </div>
+                )}
+            </Modal>
+
+            {/* Reserve Hall Modal */}
+            <Modal
+                open={!!reservingHall}
+                onClose={() => setReservingHall(null)}
+                title={`حجز القاعة: ${reservingHall?.name || ''}`}
+            >
+                {reservingHall && (
+                    <form onSubmit={submitReservation} className="space-y-4">
+                        <div className="p-3 bg-amber-50 rounded-xl flex items-center gap-3">
+                            <Lock className="h-5 w-5 text-amber-600" />
+                            <p className="text-sm text-amber-800">
+                                سيتم حجز هذه القاعة ولن تكون متاحة للتوليد التلقائي خلال الفترة المحددة
+                            </p>
+                        </div>
+
+                        <Input
+                            label="الغرض من الحجز"
+                            value={reserveForm.data.purpose}
+                            onChange={(e) => reserveForm.setData('purpose', e.target.value)}
+                            error={reserveForm.errors.purpose}
+                            placeholder="مثال: اجتماع إداري، صيانة، فعالية خاصة..."
+                            required
+                        />
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <Input
+                                label="تاريخ البداية"
+                                type="date"
+                                value={reserveForm.data.start_date}
+                                onChange={(e) => reserveForm.setData('start_date', e.target.value)}
+                                error={reserveForm.errors.start_date}
+                                required
+                            />
+                            <Input
+                                label="تاريخ النهاية"
+                                type="date"
+                                value={reserveForm.data.end_date}
+                                onChange={(e) => reserveForm.setData('end_date', e.target.value)}
+                                error={reserveForm.errors.end_date}
+                                required
+                            />
+                        </div>
+
+                        <Textarea
+                            label="ملاحظات"
+                            value={reserveForm.data.notes}
+                            onChange={(e) => reserveForm.setData('notes', e.target.value)}
+                            error={reserveForm.errors.notes}
+                            rows={2}
+                            placeholder="ملاحظات إضافية (اختياري)"
+                        />
+
+                        <div className="flex gap-3 pt-2">
+                            <Button type="submit" icon={<Lock className="h-4 w-4" />} loading={reserveForm.processing}>
+                                تأكيد الحجز
+                            </Button>
+                            <Button type="button" variant="ghost" onClick={() => setReservingHall(null)}>
+                                إلغاء
+                            </Button>
+                        </div>
+                    </form>
+                )}
+            </Modal>
+
+            {/* All Reservations Modal */}
+            <Modal
+                open={showReservations}
+                onClose={() => setShowReservations(false)}
+                title="الحجوزات اليدوية للقاعات"
+                size="xl"
+            >
+                <div className="space-y-4">
+                    {reservations.length === 0 ? (
+                        <div className="text-center py-10 text-slate-500">
+                            <Unlock className="h-12 w-12 mx-auto text-slate-300 mb-3" />
+                            <p className="font-medium">لا توجد حجوزات يدوية</p>
+                            <p className="text-sm text-slate-400 mt-1">يمكنك حجز قاعة من خلال أيقونة القفل على بطاقة القاعة</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-3 max-h-[28rem] overflow-y-auto">
+                            {reservations.map((r) => (
+                                <div key={r.id} className="p-4 border border-slate-200 rounded-xl hover:border-amber-200 transition-colors">
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex items-start gap-3">
+                                            <div className="p-2 bg-amber-50 rounded-lg">
+                                                <Lock className="h-4 w-4 text-amber-600" />
+                                            </div>
+                                            <div>
+                                                <h5 className="font-bold text-slate-800">{r.training_hall?.name}</h5>
+                                                <p className="text-sm text-slate-600 mt-0.5">{r.purpose}</p>
+                                                {r.notes && (
+                                                    <p className="text-xs text-slate-400 mt-1">{r.notes}</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={() => handleDeleteReservation(r)}
+                                            className="p-1.5 rounded-lg hover:bg-red-50 text-red-500 transition-colors"
+                                            title="إلغاء الحجز"
+                                        >
+                                            <X className="h-4 w-4" />
+                                        </button>
+                                    </div>
+                                    <div className="flex items-center gap-3 mt-3 text-xs text-slate-500 flex-wrap">
+                                        <span className="flex items-center gap-1 px-2 py-1 bg-amber-50 text-amber-700 rounded-lg">
+                                            <Calendar className="h-3.5 w-3.5" />
+                                            {formatDate(r.start_date)} - {formatDate(r.end_date)}
+                                        </span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </Modal>
+
+            {/* Delete Reservation Confirmation */}
+            <Modal
+                open={!!deletingReservation}
+                onClose={() => setDeletingReservation(null)}
+                title="إلغاء الحجز"
+            >
+                {deletingReservation && (
+                    <div className="space-y-4">
+                        <p className="text-slate-600">
+                            هل أنت متأكد من إلغاء حجز القاعة <strong>{deletingReservation.training_hall?.name}</strong>؟
+                        </p>
+                        <p className="text-sm text-slate-500">
+                            الغرض: {deletingReservation.purpose}
+                        </p>
+                        <p className="text-sm text-slate-500">
+                            الفترة: {formatDate(deletingReservation.start_date)} - {formatDate(deletingReservation.end_date)}
+                        </p>
+                        <div className="flex gap-3 pt-2">
+                            <Button variant="danger" onClick={confirmDeleteReservation}>
+                                نعم، إلغاء الحجز
+                            </Button>
+                            <Button variant="ghost" onClick={() => setDeletingReservation(null)}>
+                                تراجع
+                            </Button>
                         </div>
                     </div>
                 )}

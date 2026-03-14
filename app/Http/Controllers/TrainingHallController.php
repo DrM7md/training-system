@@ -2,20 +2,27 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\HallReservation;
 use App\Models\TrainingHall;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class TrainingHallController extends Controller
 {
     public function index()
     {
-        $halls = TrainingHall::withCount(['programGroups', 'trainingSessions'])
+        $halls = TrainingHall::withCount(['programGroups', 'trainingSessions', 'reservations'])
             ->orderByRaw("CAST(REGEXP_SUBSTR(name, '[0-9]+') AS UNSIGNED), name")
             ->paginate(50);
 
+        $reservations = HallReservation::with(['trainingHall', 'reservedBy'])
+            ->orderBy('start_date', 'desc')
+            ->get();
+
         return Inertia::render('TrainingHalls/Index', [
             'halls' => $halls,
+            'reservations' => $reservations,
         ]);
     }
 
@@ -94,5 +101,28 @@ class TrainingHallController extends Controller
     {
         $trainingHall->delete();
         return back()->with('success', 'تم حذف القاعة بنجاح');
+    }
+
+    public function reserve(Request $request, TrainingHall $trainingHall)
+    {
+        $validated = $request->validate([
+            'purpose' => 'required|string|max:255',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+            'notes' => 'nullable|string',
+        ]);
+
+        $validated['training_hall_id'] = $trainingHall->id;
+        $validated['reserved_by'] = Auth::id();
+
+        HallReservation::create($validated);
+
+        return back()->with('success', 'تم حجز القاعة بنجاح');
+    }
+
+    public function cancelReservation(HallReservation $reservation)
+    {
+        $reservation->delete();
+        return back()->with('success', 'تم إلغاء الحجز بنجاح');
     }
 }

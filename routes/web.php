@@ -45,6 +45,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('semesters', SemesterController::class)->only(['store', 'update', 'destroy']);
 
     Route::resource('training-halls', TrainingHallController::class)->except(['create', 'edit']);
+    Route::post('training-halls/{training_hall}/reserve', [TrainingHallController::class, 'reserve'])->name('training-halls.reserve');
+    Route::delete('hall-reservations/{reservation}', [TrainingHallController::class, 'cancelReservation'])->name('hall-reservations.destroy');
 
     Route::resource('programs', ProgramController::class)->except(['create', 'edit']);
     Route::post('programs/{program}/toggle-archive', [ProgramController::class, 'toggleArchive'])->name('programs.toggle-archive');
