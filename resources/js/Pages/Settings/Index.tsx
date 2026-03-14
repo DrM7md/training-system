@@ -34,8 +34,8 @@ const settingLabels: Record<string, { label: string; hint?: string }> = {
     hours_per_day: { label: 'ساعات التدريب اليومية', hint: 'عدد ساعات التدريب في اليوم الواحد' },
     training_start_time: { label: 'وقت بداية التدريب', hint: 'وقت بداية الجلسات التدريبية' },
     training_end_time: { label: 'وقت نهاية التدريب', hint: 'وقت نهاية الجلسات التدريبية' },
-    organization_name: { label: 'اسم المؤسسة', hint: 'اسم مركز أو إدارة التدريب' },
-    organization_logo: { label: 'شعار المؤسسة', hint: 'صورة شعار المؤسسة' },
+    organization_name: { label: 'اسم المركز', hint: 'اسم مركز أو إدارة التدريب' },
+    organization_logo: { label: 'شعار المركز', hint: 'صورة شعار المركز' },
     filter_government_employees: { label: 'تصفية منتسبو المدارس الحكومية في التكليفات', hint: 'عند التفعيل، يظهر فقط المدربون من منتسبو المدارس الحكومية في صفحة التكليفات' },
     payment_month_1: { label: 'شهر الصرف الأول', hint: 'رقم الشهر (مثلاً: 12 لديسمبر)' },
     payment_month_2: { label: 'شهر الصرف الثاني', hint: 'رقم الشهر (مثلاً: 3 لمارس)' },
@@ -231,7 +231,7 @@ export default function Index({ settings, dropdownCategories }: Props) {
                                                                 <>
                                                                     <img
                                                                         src={logoPreview}
-                                                                        alt="شعار المؤسسة"
+                                                                        alt="شعار المركز"
                                                                         className="w-full h-full object-contain p-2"
                                                                     />
                                                                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
