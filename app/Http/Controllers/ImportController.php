@@ -99,6 +99,9 @@ class ImportController extends Controller
         if ($summary['packages_updated'] > 0) {
             $parts[] = "تم تحديث {$summary['packages_updated']} حقيبة";
         }
+        if ($summary['groups_created'] > 0) {
+            $parts[] = "تم إنشاء {$summary['groups_created']} مجموعة";
+        }
         if ($summary['skipped'] > 0) {
             $parts[] = "تم تخطي {$summary['skipped']} صف";
         }

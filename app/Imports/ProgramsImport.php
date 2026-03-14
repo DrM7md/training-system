@@ -4,6 +4,7 @@ namespace App\Imports;
 
 use App\Models\Program;
 use App\Models\Package;
+use App\Models\ProgramGroup;
 use App\Models\User;
 use App\Models\AcademicYear;
 use App\Models\DropdownOption;
@@ -20,6 +21,7 @@ class ProgramsImport implements ToCollection, WithStartRow, WithChunkReading, Sk
     protected int $programsUpdated = 0;
     protected int $packagesCreated = 0;
     protected int $packagesUpdated = 0;
+    protected int $groupsCreated = 0;
     protected int $skippedCount = 0;
     protected string $mode;
     protected ?int $academicYearId;
@@ -136,11 +138,45 @@ class ProgramsImport implements ToCollection, WithStartRow, WithChunkReading, Sk
                 if ($this->mode === 'update') {
                     $existingPackage->update($packageData);
                     $this->packagesUpdated++;
+                    // تحديث المجموعات إذا لم توجد
+                    if ($existingPackage->programGroups()->count() === 0) {
+                        $this->createGroups($existingPackage, $maleCount, $femaleCount);
+                    }
                 }
             } else {
-                Package::create($packageData);
+                $package = Package::create($packageData);
                 $this->packagesCreated++;
+                // إنشاء المجموعات تلقائياً
+                $this->createGroups($package, $maleCount, $femaleCount);
             }
+        }
+    }
+
+    protected function createGroups(Package $package, int $maleCount, int $femaleCount): void
+    {
+        $groupNumber = $package->programGroups()->count() + 1;
+
+        if ($maleCount > 0) {
+            ProgramGroup::create([
+                'package_id' => $package->id,
+                'name' => 'مجموعة ' . $groupNumber,
+                'gender' => 'male',
+                'capacity' => $maleCount,
+                'status' => 'scheduled',
+            ]);
+            $this->groupsCreated++;
+            $groupNumber++;
+        }
+
+        if ($femaleCount > 0) {
+            ProgramGroup::create([
+                'package_id' => $package->id,
+                'name' => 'مجموعة ' . $groupNumber,
+                'gender' => 'female',
+                'capacity' => $femaleCount,
+                'status' => 'scheduled',
+            ]);
+            $this->groupsCreated++;
         }
     }
 
@@ -183,6 +219,7 @@ class ProgramsImport implements ToCollection, WithStartRow, WithChunkReading, Sk
             'programs_updated' => $this->programsUpdated,
             'packages_created' => $this->packagesCreated,
             'packages_updated' => $this->packagesUpdated,
+            'groups_created' => $this->groupsCreated,
             'skipped' => $this->skippedCount,
             'errors' => $this->errors,
         ];
