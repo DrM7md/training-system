@@ -3,11 +3,12 @@
 namespace App\Exports;
 
 use App\Models\AcademicYear;
+use App\Models\Package;
 use App\Models\Program;
+use App\Models\DropdownOption;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithStyles;
-use Maatwebsite\Excel\Concerns\WithColumnWidths;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
@@ -16,44 +17,93 @@ use PhpOffice\PhpSpreadsheet\Style\Border;
 
 class ProgramsExport implements FromCollection, WithHeadings, WithStyles, ShouldAutoSize
 {
+    protected array $typeLabels = [];
+
+    public function __construct()
+    {
+        $programTypes = DropdownOption::getOptions('program_types');
+        foreach ($programTypes as $type) {
+            $this->typeLabels[$type->value] = $type->label;
+        }
+    }
+
     public function collection()
     {
         $currentYear = AcademicYear::current();
+        $counter = 0;
 
-        return Program::with(['supervisor', 'academicYear'])
-            ->withCount('packages')
+        $programs = Program::with(['supervisor', 'packages.supervisor'])
             ->when($currentYear, fn($q) => $q->where('academic_year_id', $currentYear->id))
+            ->where('is_archived', false)
             ->orderBy('name')
-            ->get()
-            ->map(fn($p, $i) => [
-                'num' => $i + 1,
-                'name' => $p->name,
-                'type' => match($p->type) {
-                    'qualification' => 'تأهيل',
-                    'licensing' => 'ترخيص',
-                    'development' => 'تطوير',
-                    default => $p->type ?? '-',
-                },
-                'status' => match($p->status) {
-                    'new' => 'جديد',
-                    'existing' => 'قائم',
-                    default => $p->status ?? '-',
-                },
-                'hours' => $p->hours ?? 0,
-                'target_audience' => $p->target_audience ?? '-',
-                'target_count' => $p->target_count ?? 0,
-                'male_count' => $p->male_count ?? 0,
-                'female_count' => $p->female_count ?? 0,
-                'supervisor' => $p->supervisor?->name ?? '-',
-                'packages_count' => $p->packages_count,
-                'approved' => $p->is_approved ? 'نعم' : 'لا',
-                'academic_year' => $p->academicYear?->name ?? '-',
-            ]);
+            ->get();
+
+        $rows = collect();
+
+        foreach ($programs as $program) {
+            $typeLabel = $this->typeLabels[$program->type] ?? $program->type ?? '-';
+
+            if ($program->packages->isEmpty()) {
+                // برنامج بدون حقائب - صف واحد
+                $counter++;
+                $rows->push([
+                    'num' => $counter,
+                    'type' => $typeLabel,
+                    'target_audience' => $program->target_audience ?? '-',
+                    'program_name' => $program->name,
+                    'program_hours' => $program->hours ?? 0,
+                    'package_name' => '-',
+                    'package_hours' => '-',
+                    'days' => '-',
+                    'male_count' => $program->male_count ?? 0,
+                    'female_count' => $program->female_count ?? 0,
+                    'supervisor' => $program->supervisor?->name ?? '-',
+                    'quality_officer' => '-',
+                    'rating' => '-',
+                ]);
+            } else {
+                // صف لكل حقيبة في البرنامج
+                foreach ($program->packages as $package) {
+                    $counter++;
+                    $rows->push([
+                        'num' => $counter,
+                        'type' => $typeLabel,
+                        'target_audience' => $program->target_audience ?? '-',
+                        'program_name' => $program->name,
+                        'program_hours' => $program->hours ?? 0,
+                        'package_name' => $package->name,
+                        'package_hours' => $package->hours ?? 0,
+                        'days' => $package->days ?? 0,
+                        'male_count' => $program->male_count ?? 0,
+                        'female_count' => $program->female_count ?? 0,
+                        'supervisor' => $package->supervisor?->name ?? $program->supervisor?->name ?? '-',
+                        'quality_officer' => $package->quality_officer ?? '-',
+                        'rating' => $package->rating ?? '-',
+                    ]);
+                }
+            }
+        }
+
+        return $rows;
     }
 
     public function headings(): array
     {
-        return ['#', 'اسم البرنامج', 'النوع', 'الحالة', 'الساعات', 'الفئة المستهدفة', 'العدد المستهدف', 'ذكور', 'إناث', 'المشرف', 'عدد الحقائب', 'معتمد', 'العام الدراسي'];
+        return [
+            'مسلسل',
+            'نوع البرنامج',
+            'الفئة المستهدفة',
+            'اسم البرنامج التدريبي',
+            'عدد ساعات البرنامج',
+            'اسم الحقيبة التدريبية',
+            'عدد ساعات الحقيبة',
+            'عدد الأيام',
+            'عدد الذكور',
+            'عدد الإناث',
+            'اسم المشرف',
+            'مسؤول ضمان جودة الحقيبة',
+            'التقييم العام للحقيبة التدريبية',
+        ];
     }
 
     public function styles(Worksheet $sheet)

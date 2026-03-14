@@ -32,6 +32,22 @@ class SchoolController extends Controller
         $maleCount = School::where('academic_year_id', $currentYear?->id)->where('type', 'male')->count();
         $femaleCount = School::where('academic_year_id', $currentYear?->id)->where('type', 'female')->count();
 
+        // Filtered stats (react to search/type/education_level filters)
+        $hasFilters = $request->search || $request->type || $request->education_level;
+        $filteredStats = null;
+        if ($hasFilters) {
+            $filteredQuery = School::where('academic_year_id', $currentYear?->id)
+                ->when($request->search, fn($q, $s) => $q->where('name', 'like', "%{$s}%"))
+                ->when($request->type, fn($q, $t) => $q->where('type', $t))
+                ->when($request->education_level, fn($q, $el) => $q->where('education_level', $el));
+
+            $filteredStats = [
+                'total' => (clone $filteredQuery)->count(),
+                'male' => (clone $filteredQuery)->where('type', 'male')->count(),
+                'female' => (clone $filteredQuery)->where('type', 'female')->count(),
+            ];
+        }
+
         return Inertia::render('Schools/Index', [
             'schools' => $schools,
             'filters' => $request->only(['search', 'type', 'education_level']),
@@ -42,6 +58,7 @@ class SchoolController extends Controller
                 'male' => $maleCount,
                 'female' => $femaleCount,
             ],
+            'filteredStats' => $filteredStats,
         ]);
     }
 

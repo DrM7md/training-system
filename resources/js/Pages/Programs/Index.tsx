@@ -1,7 +1,8 @@
 import AuthenticatedLayout from '@/Components/Layout/AuthenticatedLayout';
-import { Head, Link, router } from '@inertiajs/react';
-import { useState } from 'react';
-import { Plus, Edit2, Trash2, Eye, BookOpen, Search, Target, Clock, X, Archive, RotateCcw, Download } from 'lucide-react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
+import { useState, useRef } from 'react';
+import { Plus, Edit2, Trash2, Eye, BookOpen, Search, Target, Clock, X, Archive, RotateCcw, Download, Upload, FileSpreadsheet } from 'lucide-react';
+import Modal from '@/Components/UI/Modal';
 import Card from '@/Components/UI/Card';
 import Button from '@/Components/UI/Button';
 import Badge from '@/Components/UI/Badge';
@@ -58,12 +59,15 @@ const statusLabels: Record<string, { label: string; variant: 'success' | 'info' 
 
 export default function Index({ programs, academicYears, supervisors, currentYear, programTypes, filters }: Props) {
     const [showForm, setShowForm] = useState(false);
+    const [showImport, setShowImport] = useState(false);
     const [editing, setEditing] = useState<Program | null>(null);
     const [deleting, setDeleting] = useState<Program | null>(null);
     const [search, setSearch] = useState(filters.search || '');
     const [yearFilter, setYearFilter] = useState(filters.year_id || '');
     const [typeFilter, setTypeFilter] = useState(filters.type || '');
     const isArchived = filters.archived === '1';
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const importForm = useForm<{ file: File | null; mode: string }>({ file: null, mode: 'skip' });
 
     const typeLabels: Record<string, string> = {};
     programTypes.forEach(t => { typeLabels[t.value] = t.label; });
@@ -144,6 +148,20 @@ export default function Index({ programs, academicYears, supervisors, currentYea
         doSearch(search, yearFilter, '');
     };
 
+    const handleImportSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!importForm.data.file) return;
+
+        importForm.post(route('import.programs'), {
+            forceFormData: true,
+            onSuccess: () => {
+                setShowImport(false);
+                importForm.reset();
+                if (fileInputRef.current) fileInputRef.current.value = '';
+            },
+        });
+    };
+
     return (
         <AuthenticatedLayout>
             <Head title="البرامج التدريبية" />
@@ -153,9 +171,17 @@ export default function Index({ programs, academicYears, supervisors, currentYea
                 description={currentYear ? `العام الدراسي: ${currentYear.name}` : undefined}
                 action={
                     <div className="flex items-center gap-2">
-                        <a href={route('export.programs')} className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-colors">
+                        <a href={route('export.programs-template')} className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-purple-700 bg-purple-50 border border-purple-200 rounded-xl hover:bg-purple-100 transition-colors">
+                            <FileSpreadsheet className="h-4 w-4" />
+                            تحميل القالب
+                        </a>
+                        <button onClick={() => setShowImport(true)} className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors">
+                            <Upload className="h-4 w-4" />
+                            استيراد
+                        </button>
+                        <a href={route('export.programs')} className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl hover:bg-emerald-100 transition-colors">
                             <Download className="h-4 w-4" />
-                            تصدير Excel
+                            تصدير
                         </a>
                         <Button icon={<Plus className="h-4 w-4" />} onClick={() => setShowForm(true)}>
                             إضافة برنامج
@@ -466,6 +492,131 @@ export default function Index({ programs, academicYears, supervisors, currentYea
                     </>
                 )}
             </FormModal>
+
+            {/* Import Modal */}
+            <Modal
+                open={showImport}
+                onClose={() => {
+                    setShowImport(false);
+                    importForm.reset();
+                    if (fileInputRef.current) fileInputRef.current.value = '';
+                }}
+                title="استيراد البرامج والحقائب من Excel"
+            >
+                <form onSubmit={handleImportSubmit} className="space-y-6">
+                    <div className="p-4 bg-teal-50 rounded-xl border border-teal-100">
+                        <h4 className="font-semibold text-teal-800 mb-2 flex items-center gap-2">
+                            <FileSpreadsheet className="h-5 w-5" />
+                            خطوات الاستيراد
+                        </h4>
+                        <ol className="text-sm text-teal-700 space-y-1 list-decimal mr-5">
+                            <li>قم بتحميل <a href={route('export.programs-template')} className="underline font-medium hover:text-teal-900">قالب Excel</a> أولاً</li>
+                            <li>املأ البيانات في القالب (لا تغير صف العناوين)</li>
+                            <li>كل صف ينشئ برنامج + حقيبة تدريبية</li>
+                            <li>إذا تكرر اسم البرنامج سيتم ربط الحقائب به</li>
+                        </ol>
+                        {currentYear && (
+                            <p className="mt-2 text-xs text-teal-600 font-medium">سيتم ربط البرامج بالعام الدراسي الحالي: {currentYear.name}</p>
+                        )}
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">عند وجود بيانات مكررة</label>
+                        <div className="grid grid-cols-2 gap-3">
+                            <label
+                                className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                                    importForm.data.mode === 'skip'
+                                        ? 'border-teal-500 bg-teal-50'
+                                        : 'border-slate-200 hover:border-slate-300'
+                                }`}
+                            >
+                                <input
+                                    type="radio"
+                                    name="mode"
+                                    value="skip"
+                                    checked={importForm.data.mode === 'skip'}
+                                    onChange={() => importForm.setData('mode', 'skip')}
+                                    className="text-teal-600 focus:ring-teal-500"
+                                />
+                                <div>
+                                    <p className="text-sm font-semibold text-slate-800">تخطي الموجودة</p>
+                                    <p className="text-xs text-slate-500">إضافة الجديدة فقط وتجاهل المكرر</p>
+                                </div>
+                            </label>
+                            <label
+                                className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                                    importForm.data.mode === 'update'
+                                        ? 'border-amber-500 bg-amber-50'
+                                        : 'border-slate-200 hover:border-slate-300'
+                                }`}
+                            >
+                                <input
+                                    type="radio"
+                                    name="mode"
+                                    value="update"
+                                    checked={importForm.data.mode === 'update'}
+                                    onChange={() => importForm.setData('mode', 'update')}
+                                    className="text-amber-600 focus:ring-amber-500"
+                                />
+                                <div>
+                                    <p className="text-sm font-semibold text-slate-800">تحديث الموجودة</p>
+                                    <p className="text-xs text-slate-500">استبدال البيانات القديمة بالجديدة</p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">اختر ملف Excel</label>
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept=".xlsx,.xls,.csv"
+                            onChange={(e) => {
+                                const file = e.target.files?.[0] || null;
+                                importForm.setData('file', file);
+                            }}
+                            className="w-full text-sm text-slate-600 file:ml-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 border border-slate-200 rounded-xl cursor-pointer"
+                        />
+                        {importForm.errors.file && (
+                            <p className="mt-1 text-sm text-red-600">{importForm.errors.file}</p>
+                        )}
+                    </div>
+
+                    <div className="flex justify-end gap-3">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setShowImport(false);
+                                importForm.reset();
+                            }}
+                            className="px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-xl transition-colors"
+                        >
+                            إلغاء
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={!importForm.data.file || importForm.processing}
+                            className="px-6 py-2 text-sm font-medium bg-teal-600 text-white rounded-xl hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                        >
+                            {importForm.processing ? (
+                                <>
+                                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                    </svg>
+                                    جاري الاستيراد...
+                                </>
+                            ) : (
+                                <>
+                                    <Upload className="h-4 w-4" />
+                                    استيراد
+                                </>
+                            )}
+                        </button>
+                    </div>
+                </form>
+            </Modal>
 
             <DeleteModal
                 open={!!deleting}

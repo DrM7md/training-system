@@ -34,6 +34,7 @@ interface Props {
     currentYear: string | null;
     educationLevels: string[];
     stats: { total: number; male: number; female: number };
+    filteredStats: { total: number; male: number; female: number } | null;
 }
 
 const typeOptions = [
@@ -46,7 +47,7 @@ const typeLabels: Record<string, string> = {
     female: 'بنات',
 };
 
-export default function Index({ schools, filters, currentYear, educationLevels, stats }: Props) {
+export default function Index({ schools, filters, currentYear, educationLevels, stats, filteredStats }: Props) {
     const [showForm, setShowForm] = useState(false);
     const [showImport, setShowImport] = useState(false);
     const [editing, setEditing] = useState<SchoolType | null>(null);
@@ -56,6 +57,8 @@ export default function Index({ schools, filters, currentYear, educationLevels, 
     const [educationFilter, setEducationFilter] = useState(filters.education_level || '');
     const fileInputRef = useRef<HTMLInputElement>(null);
     const importForm = useForm<{ file: File | null; mode: string }>({ file: null, mode: 'skip' });
+    const displayStats = filteredStats || stats;
+    const isFiltered = !!filteredStats;
 
     const initialData = editing
         ? {
@@ -151,7 +154,10 @@ export default function Index({ schools, filters, currentYear, educationLevels, 
                         </div>
                         <div>
                             <p className="text-sm text-slate-500">إجمالي المدارس</p>
-                            <p className="text-2xl font-bold text-slate-800">{stats.total}</p>
+                            <p className="text-2xl font-bold text-slate-800">{displayStats.total}</p>
+                            {isFiltered && displayStats.total !== stats.total && (
+                                <p className="text-xs text-slate-400">من أصل {stats.total}</p>
+                            )}
                         </div>
                     </div>
                 </Card>
@@ -162,7 +168,10 @@ export default function Index({ schools, filters, currentYear, educationLevels, 
                         </div>
                         <div>
                             <p className="text-sm text-slate-500">مدارس بنين</p>
-                            <p className="text-2xl font-bold text-slate-800">{stats.male}</p>
+                            <p className="text-2xl font-bold text-slate-800">{displayStats.male}</p>
+                            {isFiltered && displayStats.male !== stats.male && (
+                                <p className="text-xs text-slate-400">من أصل {stats.male}</p>
+                            )}
                         </div>
                     </div>
                 </Card>
@@ -173,7 +182,10 @@ export default function Index({ schools, filters, currentYear, educationLevels, 
                         </div>
                         <div>
                             <p className="text-sm text-slate-500">مدارس بنات</p>
-                            <p className="text-2xl font-bold text-slate-800">{stats.female}</p>
+                            <p className="text-2xl font-bold text-slate-800">{displayStats.female}</p>
+                            {isFiltered && displayStats.female !== stats.female && (
+                                <p className="text-xs text-slate-400">من أصل {stats.female}</p>
+                            )}
                         </div>
                     </div>
                 </Card>

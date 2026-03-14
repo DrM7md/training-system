@@ -28,6 +28,7 @@ use App\Exports\TrainersExport;
 use App\Exports\TrainersTemplateExport;
 use App\Exports\SchoolsExport;
 use App\Exports\SchoolsTemplateExport;
+use App\Exports\ProgramsTemplateExport;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Route;
 
@@ -85,6 +86,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('certificates/logs/{log}', [CertificateController::class, 'destroyLog'])->name('certificates.logs.destroy');
 
     Route::get('export/programs', fn() => Excel::download(new ProgramsExport, 'البرامج_التدريبية.xlsx'))->name('export.programs');
+    Route::get('export/programs-template', fn() => Excel::download(new ProgramsTemplateExport, 'قالب_استيراد_البرامج.xlsx'))->name('export.programs-template');
+    Route::post('import/programs', [ImportController::class, 'programs'])->name('import.programs');
     Route::get('export/packages', fn() => Excel::download(new PackagesExport, 'الحقائب_التدريبية.xlsx'))->name('export.packages');
     Route::get('export/groups', fn() => Excel::download(new GroupsExport, 'المجموعات.xlsx'))->name('export.groups');
     Route::get('export/trainers', fn() => Excel::download(new TrainersExport, 'المدربين.xlsx'))->name('export.trainers');

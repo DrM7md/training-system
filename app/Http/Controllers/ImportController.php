@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Imports\TrainersImport;
 use App\Imports\SchoolsImport;
+use App\Imports\ProgramsImport;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -59,6 +60,44 @@ class ImportController extends Controller
         }
         if ($summary['updated'] > 0) {
             $parts[] = "تم تحديث {$summary['updated']} مدرسة";
+        }
+        if ($summary['skipped'] > 0) {
+            $parts[] = "تم تخطي {$summary['skipped']} صف";
+        }
+
+        $message = implode('، ', $parts) ?: 'لم يتم استيراد أي بيانات';
+
+        if (!empty($summary['errors'])) {
+            return back()->with('warning', $message)->with('import_errors', $summary['errors']);
+        }
+
+        return back()->with('success', $message);
+    }
+
+    public function programs(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:xlsx,xls,csv|max:10240',
+            'mode' => 'required|in:skip,update',
+        ]);
+
+        $import = new ProgramsImport($request->input('mode', 'skip'));
+        Excel::import($import, $request->file('file'));
+
+        $summary = $import->getSummary();
+
+        $parts = [];
+        if ($summary['programs_created'] > 0) {
+            $parts[] = "تم إضافة {$summary['programs_created']} برنامج جديد";
+        }
+        if ($summary['programs_updated'] > 0) {
+            $parts[] = "تم تحديث {$summary['programs_updated']} برنامج";
+        }
+        if ($summary['packages_created'] > 0) {
+            $parts[] = "تم إضافة {$summary['packages_created']} حقيبة جديدة";
+        }
+        if ($summary['packages_updated'] > 0) {
+            $parts[] = "تم تحديث {$summary['packages_updated']} حقيبة";
         }
         if ($summary['skipped'] > 0) {
             $parts[] = "تم تخطي {$summary['skipped']} صف";
