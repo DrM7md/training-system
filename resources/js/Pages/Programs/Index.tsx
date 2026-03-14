@@ -39,12 +39,12 @@ interface DropdownOption {
 }
 
 interface Props {
-    programs: { data: Program[]; current_page: number; last_page: number };
+    programs: { data: Program[]; current_page: number; last_page: number; total: number; links: Array<{ url: string | null; label: string; active: boolean }> };
     academicYears: Array<{ id: number; name: string }>;
     supervisors: Array<{ id: number; name: string }>;
     currentYear: { id: number; name: string } | null;
     programTypes: DropdownOption[];
-    filters: { search?: string; year_id?: string; type?: string; archived?: string };
+    filters: { search?: string; year_id?: string; type?: string; archived?: string; per_page?: string };
 }
 
 const statusOptions = [
@@ -65,6 +65,7 @@ export default function Index({ programs, academicYears, supervisors, currentYea
     const [search, setSearch] = useState(filters.search || '');
     const [yearFilter, setYearFilter] = useState(filters.year_id || '');
     const [typeFilter, setTypeFilter] = useState(filters.type || '');
+    const [perPage, setPerPage] = useState(filters.per_page || '20');
     const isArchived = filters.archived === '1';
     const fileInputRef = useRef<HTMLInputElement>(null);
     const importForm = useForm<{ file: File | null; mode: string }>({ file: null, mode: 'skip' });
@@ -103,12 +104,13 @@ export default function Index({ programs, academicYears, supervisors, currentYea
         label: s.name,
     }));
 
-    const doSearch = (s: string, y: string, t: string, archived?: boolean) => {
+    const doSearch = (s: string, y: string, t: string, archived?: boolean, pp?: string) => {
         router.get(route('programs.index'), {
             search: s || undefined,
             year_id: y || undefined,
             type: t || undefined,
             archived: (archived ?? isArchived) ? '1' : undefined,
+            per_page: (pp ?? perPage) !== '20' ? (pp ?? perPage) : undefined,
         }, { preserveState: true, preserveScroll: true });
     };
 
@@ -146,6 +148,11 @@ export default function Index({ programs, academicYears, supervisors, currentYea
     const clearType = () => {
         setTypeFilter('');
         doSearch(search, yearFilter, '');
+    };
+
+    const handlePerPageChange = (val: string) => {
+        setPerPage(val);
+        doSearch(search, yearFilter, typeFilter, undefined, val);
     };
 
     const handleImportSubmit = (e: React.FormEvent) => {
@@ -259,6 +266,19 @@ export default function Index({ programs, academicYears, supervisors, currentYea
                                 <X className="h-4 w-4" />
                             </button>
                         )}
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <select
+                            value={perPage}
+                            onChange={(e) => handlePerPageChange(e.target.value)}
+                            className="px-3 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all appearance-none text-sm"
+                        >
+                            <option value="10">10</option>
+                            <option value="20">20</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                        <Badge variant="default">{programs.total} برنامج</Badge>
                     </div>
                 </div>
             </Card>
@@ -388,6 +408,28 @@ export default function Index({ programs, academicYears, supervisors, currentYea
                     </table>
                 </div>
             </Card>
+
+            {programs.links && programs.links.length > 3 && (
+                <div className="mt-6 flex justify-center">
+                    <nav className="flex items-center gap-1">
+                        {programs.links.map((link, i) => (
+                            <button
+                                key={i}
+                                disabled={!link.url}
+                                onClick={() => link.url && router.get(link.url, {}, { preserveState: true, preserveScroll: true })}
+                                className={`px-3 py-2 text-sm rounded-lg transition-colors ${
+                                    link.active
+                                        ? 'bg-teal-600 text-white'
+                                        : link.url
+                                            ? 'text-slate-600 hover:bg-slate-100'
+                                            : 'text-slate-300 cursor-not-allowed'
+                                }`}
+                                dangerouslySetInnerHTML={{ __html: link.label }}
+                            />
+                        ))}
+                    </nav>
+                </div>
+            )}
 
             <FormModal
                 open={showForm}

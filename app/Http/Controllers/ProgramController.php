@@ -28,7 +28,7 @@ class ProgramController extends Controller
             ->when($request->search, fn($q, $s) => $q->where('name', 'like', "%{$s}%"))
             ->when($request->type, fn($q, $t) => $q->where('type', $t))
             ->orderByDesc('created_at')
-            ->paginate(10)
+            ->paginate($request->input('per_page', 20))
             ->withQueryString();
 
         return Inertia::render('Programs/Index', [
@@ -37,7 +37,7 @@ class ProgramController extends Controller
             'supervisors' => User::role(['admin', 'supervisor'])->get(['id', 'name']),
             'currentYear' => $currentYear,
             'programTypes' => $programTypes,
-            'filters' => $request->only(['search', 'year_id', 'type', 'archived']),
+            'filters' => $request->only(['search', 'year_id', 'type', 'archived', 'per_page']),
         ]);
     }
 
