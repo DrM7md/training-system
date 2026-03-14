@@ -11,6 +11,7 @@ import Modal from '@/Components/UI/Modal';
 import Input from '@/Components/UI/Input';
 import Select from '@/Components/UI/Select';
 import Textarea from '@/Components/UI/Textarea';
+import SearchableSelect from '@/Components/UI/SearchableSelect';
 
 interface DropdownOption {
     value: string;
@@ -382,22 +383,19 @@ export default function Index({ assignments, trainers, programs, assignmentTypes
                         <h4 className="text-sm font-bold text-slate-700 mb-3 pb-2 border-b border-slate-100">بيانات البرنامج التدريبي</h4>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">البرنامج التدريبي <span className="text-red-500">*</span></label>
-                                <select
+                                <SearchableSelect
+                                    label="البرنامج التدريبي"
                                     value={selectedProgramId}
-                                    onChange={(e) => {
-                                        setSelectedProgramId(Number(e.target.value) || '');
+                                    onChange={(val) => {
+                                        setSelectedProgramId(Number(val) || '');
                                         setSelectedPackageId('');
                                         setSelectedGroupIds([]);
                                     }}
-                                    className="w-full px-3 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all"
+                                    options={programs.map(p => ({ value: p.id, label: p.name }))}
+                                    placeholder="-- اختر البرنامج --"
+                                    searchPlaceholder="ابحث عن برنامج..."
                                     required
-                                >
-                                    <option value="">-- اختر البرنامج --</option>
-                                    {programs.map(p => (
-                                        <option key={p.id} value={p.id}>{p.name}</option>
-                                    ))}
-                                </select>
+                                />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">الحقيبة التدريبية <span className="text-red-500">*</span></label>
