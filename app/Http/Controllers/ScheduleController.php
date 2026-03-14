@@ -165,6 +165,7 @@ class ScheduleController extends Controller
 
         $date = $validated['date'];
         $created = 0;
+        $conflicts = 0;
 
         foreach ($validated['group_ids'] as $groupId) {
             $group = \App\Models\ProgramGroup::find($groupId);
@@ -175,8 +176,17 @@ class ScheduleController extends Controller
                 ->exists();
 
             if (!$exists && $group) {
-                // Calculate day_number based on existing sessions count
                 $dayNumber = TrainingSession::where('program_group_id', $groupId)->count() + 1;
+
+                // Check for hall conflict
+                $hallConflict = false;
+                if ($group->training_hall_id) {
+                    $hallConflict = TrainingSession::where('training_hall_id', $group->training_hall_id)
+                        ->where('program_group_id', '!=', $groupId)
+                        ->whereDate('date', $date)
+                        ->where('status', '!=', 'cancelled')
+                        ->exists();
+                }
 
                 TrainingSession::create([
                     'program_group_id' => $groupId,
@@ -187,7 +197,14 @@ class ScheduleController extends Controller
                     'status' => 'scheduled',
                 ]);
                 $created++;
+                if ($hallConflict) {
+                    $conflicts++;
+                }
             }
+        }
+
+        if ($conflicts > 0) {
+            return back()->with('warning', "تم إنشاء {$created} جلسة، لكن يوجد تعارض في {$conflicts} قاعة بنفس التاريخ");
         }
 
         return back()->with('success', "تم إنشاء {$created} جلسة بنجاح");

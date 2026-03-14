@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AcademicYear;
+use App\Models\HallReservation;
 use App\Models\Package;
 use App\Models\Program;
 use App\Models\ProgramGroup;
@@ -40,7 +41,7 @@ class PackageController extends Controller
             'packages' => $packages,
             'programs' => $programs,
             'supervisors' => User::role(['admin', 'supervisor'])->get(['id', 'name']),
-            'halls' => TrainingHall::active()->get(['id', 'name', 'capacity']),
+            'halls' => TrainingHall::active()->get(['id', 'name', 'capacity', 'gender_priority']),
             'filters' => $request->only(['search', 'program_id']),
             'hoursPerDay' => $hoursPerDay,
         ]);
@@ -57,47 +58,83 @@ class PackageController extends Controller
             'training_mode' => 'required|in:in_person,remote,both',
             'supervisor_id' => 'nullable|exists:users,id',
             'auto_create_groups' => 'boolean',
+            'male_count' => 'nullable|integer|min:0',
+            'female_count' => 'nullable|integer|min:0',
         ]);
 
         $package = Package::create($validated);
 
         if ($request->boolean('auto_create_groups')) {
-            $this->createAutoGroups($package);
+            $maleCount = $request->input('male_count', $package->program->male_count ?? 0);
+            $femaleCount = $request->input('female_count', $package->program->female_count ?? 0);
+            $this->createAutoGroups($package, (int) $maleCount, (int) $femaleCount);
         }
 
         return back()->with('success', 'تم إضافة الحقيبة بنجاح');
     }
 
-    protected function createAutoGroups(Package $package)
+    public function generateGroups(Request $request, Package $package)
     {
-        $program = $package->program;
-        $halls = TrainingHall::active()->withCount(['programGroups' => function ($q) {
-            $q->where('status', '!=', 'cancelled');
-        }])->orderBy('capacity', 'desc')->get();
+        $validated = $request->validate([
+            'male_count' => 'required|integer|min:0',
+            'female_count' => 'required|integer|min:0',
+        ]);
+
+        if ($validated['male_count'] == 0 && $validated['female_count'] == 0) {
+            return back()->with('error', 'يجب تحديد عدد الذكور أو الإناث');
+        }
+
+        $result = $this->createAutoGroups($package, $validated['male_count'], $validated['female_count']);
+
+        return back()->with('success', "تم إنشاء {$result['groups_created']} مجموعة بنجاح على {$result['halls_used']} قاعة");
+    }
+
+    protected function createAutoGroups(Package $package, int $maleCount, int $femaleCount): array
+    {
+        // Get halls with active reservations excluded
+        $reservedHallIds = HallReservation::pluck('training_hall_id')->unique()->toArray();
+
+        $halls = TrainingHall::active()
+            ->whereNotIn('id', $reservedHallIds)
+            ->withCount(['programGroups' => function ($q) {
+                $q->where('status', '!=', 'cancelled');
+            }])
+            ->get();
 
         if ($halls->isEmpty()) {
-            return;
+            return ['groups_created' => 0, 'halls_used' => 0];
         }
 
-        $groupNumber = 1;
+        $groupNumber = $package->programGroups()->count() + 1;
         $genderBatches = [];
+        $groupsCreated = 0;
+        $hallsUsed = [];
 
-        if ($program->male_count > 0) {
-            $genderBatches[] = ['gender' => 'male', 'count' => $program->male_count];
+        if ($maleCount > 0) {
+            $genderBatches[] = ['gender' => 'male', 'count' => $maleCount];
         }
-        if ($program->female_count > 0) {
-            $genderBatches[] = ['gender' => 'female', 'count' => $program->female_count];
-        }
-        if (empty($genderBatches) && $program->target_count > 0) {
-            $genderBatches[] = ['gender' => 'mixed', 'count' => $program->target_count];
+        if ($femaleCount > 0) {
+            $genderBatches[] = ['gender' => 'female', 'count' => $femaleCount];
         }
 
         foreach ($genderBatches as $batch) {
+            // Filter halls by gender priority
+            $genderHalls = $halls->filter(function ($hall) use ($batch) {
+                if (!$hall->gender_priority) return true; // no priority = available for all
+                if ($hall->gender_priority === 'all') return true;
+                return $hall->gender_priority === $batch['gender'];
+            });
+
+            // Fallback to all halls if no gender-appropriate halls found
+            if ($genderHalls->isEmpty()) {
+                $genderHalls = $halls;
+            }
+
             $remaining = $batch['count'];
 
             while ($remaining > 0) {
-                // Find hall with most available capacity (capacity - current groups assigned)
-                $bestHall = $halls->sortBy('program_groups_count')->first();
+                // Find hall with least load
+                $bestHall = $genderHalls->sortBy('program_groups_count')->first();
                 $hallCapacity = $bestHall->capacity ?: 25;
                 $groupSize = min($hallCapacity, $remaining);
 
@@ -110,12 +147,15 @@ class PackageController extends Controller
                     'status' => 'scheduled',
                 ]);
 
-                // Increment the in-memory count so next iteration picks a less-loaded hall
                 $bestHall->program_groups_count++;
                 $remaining -= $groupSize;
                 $groupNumber++;
+                $groupsCreated++;
+                $hallsUsed[$bestHall->id] = true;
             }
         }
+
+        return ['groups_created' => $groupsCreated, 'halls_used' => count($hallsUsed)];
     }
 
     public function show(Package $package)

@@ -141,17 +141,36 @@ class ProgramGroupController extends Controller
             'dates.*' => 'nullable|date',
         ]);
 
+        $validDates = array_filter($validated['dates'], fn($d) => !empty($d));
+
+        // Check for hall conflicts before proceeding
+        $conflicts = [];
+        if ($group->training_hall_id) {
+            foreach ($validDates as $date) {
+                $conflicting = TrainingSession::where('training_hall_id', $group->training_hall_id)
+                    ->where('program_group_id', '!=', $group->id)
+                    ->whereDate('date', $date)
+                    ->where('status', '!=', 'cancelled')
+                    ->with('programGroup.package.program')
+                    ->first();
+
+                if ($conflicting) {
+                    $programName = $conflicting->programGroup?->package?->program?->name ?? '';
+                    $groupName = $conflicting->programGroup?->name ?? '';
+                    $conflicts[] = Carbon::parse($date)->format('Y-m-d') . " ({$programName} - {$groupName})";
+                }
+            }
+        }
+
         $group->trainingSessions()->delete();
 
-        $validDates = array_filter($validated['dates'], fn($d) => !empty($d));
-        
         $dayNumber = 1;
         $startDate = null;
         $endDate = null;
 
         foreach ($validDates as $date) {
             $sessionDate = Carbon::parse($date);
-            
+
             if (!$startDate || $sessionDate->lt($startDate)) {
                 $startDate = $sessionDate->copy();
             }
@@ -175,6 +194,11 @@ class ProgramGroupController extends Controller
                 'start_date' => $startDate,
                 'end_date' => $endDate,
             ]);
+        }
+
+        if (!empty($conflicts)) {
+            $conflictList = implode('، ', $conflicts);
+            return back()->with('warning', "تم توليد الجلسات، لكن يوجد تعارض في القاعة بالتواريخ التالية: {$conflictList}");
         }
 
         return back()->with('success', 'تم توليد الجلسات بنجاح');

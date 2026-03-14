@@ -1,5 +1,5 @@
 import AuthenticatedLayout from '@/Components/Layout/AuthenticatedLayout';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 import { Plus, Edit2, Trash2, Package, Clock, Calendar, Search, ChevronDown, ChevronUp, BookOpen, User, Layers, Eye, Users, Minimize2, Maximize2, X, Download, Monitor, Wifi, MonitorSmartphone } from 'lucide-react';
 import Card from '@/Components/UI/Card';
@@ -110,6 +110,8 @@ export default function Index({ packages, programs, supervisors, halls, filters,
     const [viewingDetails, setViewingDetails] = useState<PackageItem | null>(null);
     const [search, setSearch] = useState(filters.search || '');
     const [programFilter, setProgramFilter] = useState(filters.program_id || '');
+    const [generatingFor, setGeneratingFor] = useState<PackageItem | null>(null);
+    const generateForm = useForm({ male_count: 0, female_count: 0 });
 
     const groupedPackages: GroupedPackages[] = packages.data.reduce((acc: GroupedPackages[], pkg) => {
         if (!pkg.program) return acc;
@@ -406,12 +408,31 @@ export default function Index({ packages, programs, supervisors, halls, filters,
                                                     </div>
                                                 )}
 
-                                                <button
-                                                    onClick={() => setViewingDetails(pkg)}
-                                                    className="mt-3 w-full py-2 text-sm text-teal-600 hover:text-teal-700 hover:bg-teal-50 rounded-lg transition-colors font-medium"
-                                                >
-                                                    عرض التفاصيل والمجموعات
-                                                </button>
+                                                <div className="mt-3 flex gap-2">
+                                                    <button
+                                                        onClick={() => setViewingDetails(pkg)}
+                                                        className="flex-1 py-2 text-sm text-teal-600 hover:text-teal-700 hover:bg-teal-50 rounded-lg transition-colors font-medium"
+                                                    >
+                                                        عرض التفاصيل والمجموعات
+                                                    </button>
+                                                    {pkg.program_groups_count === 0 && (
+                                                        <button
+                                                            onClick={() => {
+                                                                const prog = programs.find(p => p.id === pkg.program_id);
+                                                                generateForm.setData({
+                                                                    male_count: prog?.male_count || 0,
+                                                                    female_count: prog?.female_count || 0,
+                                                                });
+                                                                setGeneratingFor(pkg);
+                                                            }}
+                                                            className="py-2 px-3 text-sm text-amber-600 hover:text-amber-700 hover:bg-amber-50 rounded-lg transition-colors font-medium flex items-center gap-1"
+                                                            title="توليد مجموعات"
+                                                        >
+                                                            <Users className="h-4 w-4" />
+                                                            توليد
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </div>
                                         ))}
 
@@ -707,6 +728,67 @@ export default function Index({ packages, programs, supervisors, halls, filters,
                             </Link>
                         </ModalFooter>
                     </div>
+                )}
+            </Modal>
+
+            {/* Generate Groups Modal */}
+            <Modal
+                open={!!generatingFor}
+                onClose={() => setGeneratingFor(null)}
+                title={`توليد مجموعات: ${generatingFor?.name || ''}`}
+            >
+                {generatingFor && (
+                    <form onSubmit={(e) => {
+                        e.preventDefault();
+                        generateForm.post(route('packages.generate-groups', generatingFor.id), {
+                            preserveScroll: true,
+                            onSuccess: () => setGeneratingFor(null),
+                        });
+                    }} className="space-y-4">
+                        <div className="p-3 bg-teal-50 rounded-xl text-sm text-teal-800">
+                            سيتم توزيع المجموعات تلقائياً على القاعات المتاحة حسب سعتها وأولوية الجنس، مع استثناء القاعات المحجوزة.
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <Input
+                                label="عدد الذكور"
+                                type="number"
+                                min={0}
+                                value={generateForm.data.male_count}
+                                onChange={(e) => generateForm.setData('male_count', Number.parseInt(e.target.value) || 0)}
+                                error={generateForm.errors.male_count}
+                            />
+                            <Input
+                                label="عدد الإناث"
+                                type="number"
+                                min={0}
+                                value={generateForm.data.female_count}
+                                onChange={(e) => generateForm.setData('female_count', Number.parseInt(e.target.value) || 0)}
+                                error={generateForm.errors.female_count}
+                            />
+                        </div>
+
+                        {(generateForm.data.male_count > 0 || generateForm.data.female_count > 0) && (
+                            <div className="p-3 bg-slate-50 rounded-xl text-sm text-slate-600 space-y-1">
+                                <p className="font-semibold text-slate-700">المجموعات المتوقعة:</p>
+                                {generateForm.data.male_count > 0 && (
+                                    <p>ذكور: {generateForm.data.male_count} متدرب ≈ {Math.ceil(generateForm.data.male_count / 25)} مجموعة</p>
+                                )}
+                                {generateForm.data.female_count > 0 && (
+                                    <p>إناث: {generateForm.data.female_count} متدربة ≈ {Math.ceil(generateForm.data.female_count / 25)} مجموعة</p>
+                                )}
+                            </div>
+                        )}
+
+                        <div className="flex gap-3 pt-2">
+                            <Button type="submit" icon={<Users className="h-4 w-4" />} loading={generateForm.processing}>
+                                توليد المجموعات
+                            </Button>
+                            <Button type="button" variant="ghost" onClick={() => setGeneratingFor(null)}>
+                                إلغاء
+                            </Button>
+                        </div>
+                    </form>
                 )}
             </Modal>
         </AuthenticatedLayout>
