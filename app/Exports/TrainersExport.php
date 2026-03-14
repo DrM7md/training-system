@@ -23,10 +23,10 @@ class TrainersExport implements FromCollection, WithHeadings, WithStyles, Should
             'employee_id' => $t->employee_id ?? '-',
             'name' => $t->name,
             'nationality' => $t->nationality ?? '-',
-            'nationality_category' => $t->nationality_category ?? '-',
             'employer_type' => $t->employer_type ?? '-',
             'employer' => $t->employer ?? '-',
             'job_title' => $t->job_title ?? '-',
+            'job_category' => $t->job_category ?? '-',
             'education_level' => $t->education_level ?? '-',
             'academic_specialization' => $t->academic_specialization ?? $t->specialization ?? '-',
             'experience' => $t->current_experience_years,
@@ -43,8 +43,6 @@ class TrainersExport implements FromCollection, WithHeadings, WithStyles, Should
             'cooperation_status' => $t->cooperation_status ?? '-',
             'phone' => $t->phone ?? '-',
             'email' => $t->email ?? '-',
-            'job_category' => $t->job_category ?? '-',
-            'is_government_employee' => $t->is_government_employee ? 'نعم' : 'لا',
             'direct_manager' => $t->direct_manager ?? '-',
             'notes' => $t->notes ?? '-',
         ]);
@@ -54,18 +52,18 @@ class TrainersExport implements FromCollection, WithHeadings, WithStyles, Should
     {
         return [
             '#', 'الجنس', 'الرقم الشخصي', 'الرقم الوظيفي', 'الاسم', 'الجنسية',
-            'فئة الجنسية', 'نوع جهة العمل', 'جهة العمل', 'المسمى الوظيفي',
+            'نوع جهة العمل', 'جهة العمل', 'المسمى الوظيفي', 'الفئة الوظيفية',
             'المستوى العلمي', 'التخصص العلمي', 'سنوات الخبرة', 'شهادة مدرب معتمد',
             'إعداد الحقائب', 'مجالات التدريب', 'جنس التدريب', 'تقييم المدرب',
             'حالة التعاون', 'رقم الجوال', 'البريد الإلكتروني',
-            'الفئة الوظيفية', 'منتسبو المدارس الحكومية', 'المسؤول المباشر / المدير', 'ملاحظات',
+            'المسؤول المباشر / المدير', 'ملاحظات',
         ];
     }
 
     public function styles(Worksheet $sheet)
     {
         $lastRow = $sheet->getHighestRow();
-        $lastCol = 'Y';
+        $lastCol = 'W';
 
         $sheet->setRightToLeft(true);
 

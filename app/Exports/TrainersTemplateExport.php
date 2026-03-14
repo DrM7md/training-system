@@ -16,14 +16,14 @@ class TrainersTemplateExport implements FromArray, WithHeadings, WithStyles, Sho
 {
     public function array(): array
     {
-        // صف مثال واحد لتوضيح التعبئة
         return [
             [
                 1, 'ذكر', '28401234567', 'E12345', 'أحمد محمد علي', 'قطر',
-                'داخلي', 'وزارة التعليم', 'مدرب أول', 'ماجستير', 'تقنية المعلومات',
+                'داخلي', 'وزارة التعليم', 'مدرب أول', 'منتسبو المدارس الحكومية',
+                'ماجستير', 'تقنية المعلومات',
                 5, 'نعم', 'نعم', 'التدريب التقني والإداري', 'رجال ونساء',
                 '', 'متعاون', '55512345', 'ahmed@example.com',
-                'منتسبو المدارس الحكومية', 'نعم', 'محمد أحمد العلي', '',
+                'محمد أحمد العلي', '',
             ],
         ];
     }
@@ -31,36 +31,35 @@ class TrainersTemplateExport implements FromArray, WithHeadings, WithStyles, Sho
     public function headings(): array
     {
         return [
-            'مسلسل',
-            'الجنس',
-            'الرقم الشخصي',
-            'الرقم الوظيفي',
-            'الاسم',
-            'الجنسية',
-            'نوع جهة العمل',
-            'جهة العمل',
-            'المسمى الوظيفي',
-            'المستوى العلمي',
-            'التخصص العلمي',
-            'سنوات الخبرة في التدريب',
-            'شهادة مدرب معتمد',
-            'إعداد الحقائب التدريبية',
-            'مجالات التدريب وإعداد الحقائب',
-            'جنس التدريب',
-            'تقييم المدرب',
-            'حالة التعاون',
-            'رقم الجوال',
-            'البريد الإلكتروني',
-            'الفئة الوظيفية',
-            'منتسبو المدارس الحكومية',
-            'المسؤول المباشر / المدير',
-            'ملاحظات',
+            'مسلسل',           // A
+            'الجنس',           // B
+            'الرقم الشخصي',    // C
+            'الرقم الوظيفي',   // D
+            'الاسم',           // E
+            'الجنسية',         // F
+            'نوع جهة العمل',   // G
+            'جهة العمل',       // H
+            'المسمى الوظيفي',  // I
+            'الفئة الوظيفية',  // J (moved here)
+            'المستوى العلمي',  // K
+            'التخصص العلمي',   // L
+            'سنوات الخبرة في التدريب', // M
+            'شهادة مدرب معتمد', // N
+            'إعداد الحقائب التدريبية', // O
+            'مجالات التدريب وإعداد الحقائب', // P
+            'جنس التدريب',     // Q
+            'تقييم المدرب',    // R
+            'حالة التعاون',    // S
+            'رقم الجوال',      // T
+            'البريد الإلكتروني', // U
+            'المسؤول المباشر / المدير', // V
+            'ملاحظات',         // W
         ];
     }
 
     public function styles(Worksheet $sheet)
     {
-        $lastCol = 'X';
+        $lastCol = 'W';
 
         $sheet->setRightToLeft(true);
 
@@ -104,44 +103,39 @@ class TrainersTemplateExport implements FromArray, WithHeadings, WithStyles, Sho
             $sheet->getCell("G{$i}")->setDataValidation(clone $employerTypeValidation);
         }
 
-        // Data validation for شهادة مدرب معتمد (column M)
-        $yesNoValidation = new DataValidation();
-        $yesNoValidation->setType(DataValidation::TYPE_LIST);
-        $yesNoValidation->setAllowBlank(true);
-        $yesNoValidation->setFormula1('"نعم,لا"');
-        for ($i = 3; $i <= 500; $i++) {
-            $sheet->getCell("M{$i}")->setDataValidation(clone $yesNoValidation);
-            $sheet->getCell("N{$i}")->setDataValidation(clone $yesNoValidation);
-        }
-
-        // Data validation for الفئة الوظيفية (column U)
+        // Data validation for الفئة الوظيفية (column J)
         $jobCategoryValidation = new DataValidation();
         $jobCategoryValidation->setType(DataValidation::TYPE_LIST);
         $jobCategoryValidation->setAllowBlank(true);
         $jobCategoryValidation->setFormula1('"منتسبو المدارس الحكومية,منتسبو وزارة التربية والتعليم,منتسبو المدارس الخاصة,منتسبو الجهات الخارجية,غير منتسب لجهة عمل,أخرى"');
         for ($i = 3; $i <= 500; $i++) {
-            $sheet->getCell("U{$i}")->setDataValidation(clone $jobCategoryValidation);
+            $sheet->getCell("J{$i}")->setDataValidation(clone $jobCategoryValidation);
         }
 
-        // Data validation for منتسبو المدارس الحكومية (column V)
+        // Data validation for شهادة مدرب معتمد (column N) and إعداد الحقائب (column O)
+        $yesNoValidation = new DataValidation();
+        $yesNoValidation->setType(DataValidation::TYPE_LIST);
+        $yesNoValidation->setAllowBlank(true);
+        $yesNoValidation->setFormula1('"نعم,لا"');
         for ($i = 3; $i <= 500; $i++) {
-            $sheet->getCell("V{$i}")->setDataValidation(clone $yesNoValidation);
+            $sheet->getCell("N{$i}")->setDataValidation(clone $yesNoValidation);
+            $sheet->getCell("O{$i}")->setDataValidation(clone $yesNoValidation);
         }
 
-        // Data validation for جنس التدريب (column P)
+        // Data validation for جنس التدريب (column Q)
         $trainingGenderValidation = new DataValidation();
         $trainingGenderValidation->setType(DataValidation::TYPE_LIST);
         $trainingGenderValidation->setAllowBlank(true);
         $trainingGenderValidation->setFormula1('"رجال,نساء,رجال ونساء"');
         for ($i = 3; $i <= 500; $i++) {
-            $sheet->getCell("P{$i}")->setDataValidation(clone $trainingGenderValidation);
+            $sheet->getCell("Q{$i}")->setDataValidation(clone $trainingGenderValidation);
         }
 
         // Set column widths for text fields
-        $sheet->getColumnDimension('O')->setWidth(35); // مجالات التدريب
-        $sheet->getColumnDimension('U')->setWidth(30); // الفئة الوظيفية
-        $sheet->getColumnDimension('W')->setWidth(25); // المسؤول المباشر
-        $sheet->getColumnDimension('X')->setWidth(25); // ملاحظات
+        $sheet->getColumnDimension('J')->setWidth(30);  // الفئة الوظيفية
+        $sheet->getColumnDimension('P')->setWidth(35);  // مجالات التدريب
+        $sheet->getColumnDimension('V')->setWidth(25);  // المسؤول المباشر
+        $sheet->getColumnDimension('W')->setWidth(25);  // ملاحظات
 
         return [];
     }

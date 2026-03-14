@@ -15,11 +15,11 @@ class TrainersImport extends BaseImport
     // ترتيب الأعمدة في القالب:
     // 0=مسلسل, 1=الجنس, 2=الرقم الشخصي, 3=الرقم الوظيفي, 4=الاسم,
     // 5=الجنسية, 6=نوع جهة العمل, 7=جهة العمل, 8=المسمى الوظيفي,
-    // 9=المستوى العلمي, 10=التخصص العلمي, 11=سنوات الخبرة,
-    // 12=شهادة مدرب معتمد, 13=إعداد الحقائب, 14=مجالات التدريب,
-    // 15=جنس التدريب, 16=تقييم المدرب, 17=حالة التعاون,
-    // 18=رقم الجوال, 19=البريد الإلكتروني,
-    // 20=الفئة الوظيفية, 21=منتسبو المدارس الحكومية, 22=المسؤول المباشر, 23=ملاحظات
+    // 9=الفئة الوظيفية, 10=المستوى العلمي, 11=التخصص العلمي,
+    // 12=سنوات الخبرة, 13=شهادة مدرب معتمد, 14=إعداد الحقائب,
+    // 15=مجالات التدريب, 16=جنس التدريب, 17=تقييم المدرب,
+    // 18=حالة التعاون, 19=رقم الجوال, 20=البريد الإلكتروني,
+    // 21=المسؤول المباشر, 22=ملاحظات
 
     protected function getModel(): string
     {
@@ -35,13 +35,17 @@ class TrainersImport extends BaseImport
         }
 
         $gender = $this->mapGender(trim($row[1] ?? ''));
-        $experienceYears = (int) ($row[11] ?? 0);
-        $isCertified = $this->mapCheckbox($row[12] ?? '');
-        $canPrepare = $this->mapCheckbox($row[13] ?? '');
-        $trainingGender = $this->mapTrainingGender(trim($row[15] ?? ''));
+        $experienceYears = (int) ($row[12] ?? 0);
+        $isCertified = $this->mapCheckbox($row[13] ?? '');
+        $canPrepare = $this->mapCheckbox($row[14] ?? '');
+        $trainingGender = $this->mapTrainingGender(trim($row[16] ?? ''));
         $employerType = trim($row[6] ?? '');
         $isInternal = mb_strpos($employerType, 'داخلي') !== false;
-        $email = trim($row[19] ?? '');
+        $email = trim($row[20] ?? '');
+        $jobCategory = trim($row[9] ?? '');
+
+        // Determine is_government_employee from job_category
+        $isGovernmentEmployee = mb_strpos($jobCategory, 'منتسبو المدارس الحكومية') !== false;
 
         return [
             'name' => $name,
@@ -53,23 +57,23 @@ class TrainersImport extends BaseImport
             'is_internal' => $isInternal,
             'employer' => trim($row[7] ?? '') ?: null,
             'job_title' => trim($row[8] ?? '') ?: null,
-            'education_level' => trim($row[9] ?? '') ?: null,
-            'academic_specialization' => trim($row[10] ?? '') ?: null,
-            'specialization' => trim($row[10] ?? '') ?: null,
+            'job_category' => $jobCategory ?: null,
+            'education_level' => trim($row[10] ?? '') ?: null,
+            'academic_specialization' => trim($row[11] ?? '') ?: null,
+            'specialization' => trim($row[11] ?? '') ?: null,
             'training_experience_years' => $experienceYears,
             'experience_base_date' => $experienceYears > 0 ? Carbon::now()->toDateString() : null,
             'is_certified_trainer' => $isCertified,
             'can_prepare_packages' => $canPrepare,
-            'training_fields' => trim($row[14] ?? '') ?: null,
+            'training_fields' => trim($row[15] ?? '') ?: null,
             'training_gender' => $trainingGender,
-            'trainer_evaluation' => trim($row[16] ?? '') ?: null,
-            'cooperation_status' => trim($row[17] ?? '') ?: null,
-            'phone' => trim($row[18] ?? '') ?: null,
+            'trainer_evaluation' => trim($row[17] ?? '') ?: null,
+            'cooperation_status' => trim($row[18] ?? '') ?: null,
+            'phone' => trim($row[19] ?? '') ?: null,
             'email' => $email ?: null,
-            'job_category' => trim($row[20] ?? '') ?: null,
-            'is_government_employee' => $this->mapCheckbox($row[21] ?? ''),
-            'direct_manager' => trim($row[22] ?? '') ?: null,
-            'notes' => trim($row[23] ?? '') ?: null,
+            'is_government_employee' => $isGovernmentEmployee,
+            'direct_manager' => trim($row[21] ?? '') ?: null,
+            'notes' => trim($row[22] ?? '') ?: null,
             'is_active' => true,
         ];
     }
