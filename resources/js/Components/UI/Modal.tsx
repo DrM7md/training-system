@@ -48,6 +48,11 @@ export default function Modal({
                             e.preventDefault();
                         }
                     }}
+                    onFocusOutside={(e) => {
+                        if (document.body.hasAttribute('data-searchable-open')) {
+                            e.preventDefault();
+                        }
+                    }}
                     onInteractOutside={(e) => {
                         if (document.body.hasAttribute('data-searchable-open')) {
                             e.preventDefault();
