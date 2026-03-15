@@ -109,8 +109,7 @@ export default function OfficialHolidaysIndex({ holidays }: Props) {
         <AuthenticatedLayout>
             <Head title="الإجازات الرسمية" />
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-                <PageHeader
+            <PageHeader
                     title="الإجازات الرسمية"
                     description="إدارة الإجازات الرسمية والعطلات للعام الدراسي"
                     action={
@@ -219,7 +218,6 @@ export default function OfficialHolidaysIndex({ holidays }: Props) {
                         })}
                     </div>
                 )}
-            </div>
 
             {/* Form Modal */}
             <Modal
