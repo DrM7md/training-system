@@ -43,6 +43,18 @@ export default function Modal({
                         sizeClasses[size]
                     )}
                     dir="rtl"
+                    onPointerDownOutside={(e) => {
+                        const target = e.target as HTMLElement;
+                        if (target.closest?.('[data-searchable-select-dropdown]')) {
+                            e.preventDefault();
+                        }
+                    }}
+                    onInteractOutside={(e) => {
+                        const target = e.target as HTMLElement;
+                        if (target.closest?.('[data-searchable-select-dropdown]')) {
+                            e.preventDefault();
+                        }
+                    }}
                 >
                     <div className="flex items-start justify-between mb-5 pb-4 border-b border-slate-100">
                         <div>

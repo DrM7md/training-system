@@ -159,6 +159,8 @@ export default function SearchableSelect({
                     ref={dropdownRef}
                     dir="rtl"
                     style={dropdownStyle}
+                    data-searchable-select-dropdown
+                    onPointerDown={(e) => e.stopPropagation()}
                     className="bg-white border border-slate-200 rounded-xl shadow-xl shadow-slate-200/50 overflow-hidden"
                 >
                     <div className="p-2 border-b border-slate-100">
