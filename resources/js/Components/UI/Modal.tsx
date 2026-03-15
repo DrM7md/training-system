@@ -40,25 +40,9 @@ export default function Modal({
                         'bg-white rounded-2xl shadow-2xl shadow-slate-900/10 w-full',
                         'animate-in fade-in zoom-in-95 duration-200',
                         'max-h-[85vh] flex flex-col',
-                        // ✅ overflow-visible عشان الـ dropdown ما ينقص
-                        'overflow-visible',
                         sizeClasses[size],
                     )}
                     dir="rtl"
-                    onPointerDownOutside={(e) => {
-                        const orig = (e as any).detail?.originalEvent;
-                        const target = (orig?.target || e.target) as HTMLElement;
-                        if (target?.closest?.('[data-searchable-select-dropdown]')) {
-                            e.preventDefault();
-                        }
-                    }}
-                    onInteractOutside={(e) => {
-                        const orig = (e as any).detail?.originalEvent;
-                        const target = (orig?.target || e.target) as HTMLElement;
-                        if (target?.closest?.('[data-searchable-select-dropdown]')) {
-                            e.preventDefault();
-                        }
-                    }}
                 >
                     {/* ─── Header (ثابت) ─── */}
                     <div className="flex items-start justify-between p-6 pb-4 border-b border-slate-100 shrink-0">
