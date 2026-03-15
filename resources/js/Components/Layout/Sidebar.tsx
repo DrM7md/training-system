@@ -41,7 +41,6 @@ const menuItems: MenuItem[] = [
             { title: 'الحقائب التدريبية', icon: Package, href: '/packages' },
             { title: 'المجموعات', icon: Layers, href: '/groups' },
             { title: 'جدولة القاعات', icon: Calendar, href: '/schedule' },
-            { title: 'الإجازات الرسمية', icon: CalendarOff, href: '/official-holidays' },
         ],
     },
     {
@@ -74,6 +73,7 @@ const menuItems: MenuItem[] = [
         title: 'إدارة النظام',
         icon: Settings,
         children: [
+            { title: 'الإجازات الرسمية', icon: CalendarOff, href: '/official-holidays' },
             { title: 'المستخدمين', icon: UserCog, href: '/users' },
             { title: 'الأدوار والصلاحيات', icon: Settings, href: '/roles' },
             { title: 'الإعدادات', icon: Settings, href: '/settings' },
