@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Search, ChevronDown, X, Check } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -33,10 +34,26 @@ export default function SearchableSelect({
 }: SearchableSelectProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+    const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
     const containerRef = useRef<HTMLDivElement>(null);
+    const buttonRef = useRef<HTMLButtonElement>(null);
+    const dropdownRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
     const selectedOption = options.find((opt) => String(opt.value) === String(value));
+
+    const updateDropdownPosition = useCallback(() => {
+        if (buttonRef.current) {
+            const rect = buttonRef.current.getBoundingClientRect();
+            setDropdownStyle({
+                position: 'fixed',
+                top: rect.bottom + 4,
+                left: rect.left,
+                width: rect.width,
+                zIndex: 9999,
+            });
+        }
+    }, []);
 
     const filteredOptions = useMemo(() => {
         if (!searchQuery) return options;
@@ -50,7 +67,11 @@ export default function SearchableSelect({
 
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
-            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+            const target = event.target as Node;
+            if (
+                containerRef.current && !containerRef.current.contains(target) &&
+                dropdownRef.current && !dropdownRef.current.contains(target)
+            ) {
                 setIsOpen(false);
                 setSearchQuery('');
             }
@@ -60,10 +81,11 @@ export default function SearchableSelect({
     }, []);
 
     useEffect(() => {
-        if (isOpen && inputRef.current) {
-            inputRef.current.focus();
+        if (isOpen) {
+            updateDropdownPosition();
+            inputRef.current?.focus();
         }
-    }, [isOpen]);
+    }, [isOpen, updateDropdownPosition]);
 
     const handleSelect = (optionValue: string | number) => {
         onChange(optionValue);
@@ -87,6 +109,7 @@ export default function SearchableSelect({
             )}
             <div className="relative">
                 <button
+                    ref={buttonRef}
                     type="button"
                     onClick={() => !disabled && setIsOpen(!isOpen)}
                     disabled={disabled}
@@ -130,55 +153,61 @@ export default function SearchableSelect({
                     </div>
                 </button>
 
-                {isOpen && (
-                    <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl shadow-slate-200/50 overflow-hidden">
-                        <div className="p-2 border-b border-slate-100">
-                            <div className="relative">
-                                <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                                <input
-                                    ref={inputRef}
-                                    type="text"
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    placeholder={searchPlaceholder}
-                                    className="w-full pr-9 pl-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
-                                />
-                            </div>
-                        </div>
-                        <div className="max-h-60 overflow-y-auto">
-                            {filteredOptions.length === 0 ? (
-                                <div className="px-4 py-8 text-center text-slate-500 text-sm">
-                                    لا توجد نتائج
-                                </div>
-                            ) : (
-                                filteredOptions.map((option) => (
-                                    <button
-                                        key={option.value}
-                                        type="button"
-                                        onClick={() => handleSelect(option.value)}
-                                        className={clsx(
-                                            'w-full px-4 py-2.5 text-right text-sm transition-colors flex items-center justify-between',
-                                            String(option.value) === String(value)
-                                                ? 'bg-teal-50 text-teal-700'
-                                                : 'hover:bg-slate-50 text-slate-700'
-                                        )}
-                                    >
-                                        <div className="flex flex-col items-start">
-                                            <span className="font-medium">{option.label}</span>
-                                            {option.subLabel && (
-                                                <span className="text-xs text-slate-400">{option.subLabel}</span>
-                                            )}
-                                        </div>
-                                        {String(option.value) === String(value) && (
-                                            <Check className="h-4 w-4 text-teal-600" />
-                                        )}
-                                    </button>
-                                ))
-                            )}
+            </div>
+            {isOpen && createPortal(
+                <div
+                    ref={dropdownRef}
+                    dir="rtl"
+                    style={dropdownStyle}
+                    className="bg-white border border-slate-200 rounded-xl shadow-xl shadow-slate-200/50 overflow-hidden"
+                >
+                    <div className="p-2 border-b border-slate-100">
+                        <div className="relative">
+                            <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                            <input
+                                ref={inputRef}
+                                type="text"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                placeholder={searchPlaceholder}
+                                className="w-full pr-9 pl-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+                            />
                         </div>
                     </div>
-                )}
-            </div>
+                    <div className="max-h-60 overflow-y-auto">
+                        {filteredOptions.length === 0 ? (
+                            <div className="px-4 py-8 text-center text-slate-500 text-sm">
+                                لا توجد نتائج
+                            </div>
+                        ) : (
+                            filteredOptions.map((option) => (
+                                <button
+                                    key={option.value}
+                                    type="button"
+                                    onClick={() => handleSelect(option.value)}
+                                    className={clsx(
+                                        'w-full px-4 py-2.5 text-right text-sm transition-colors flex items-center justify-between',
+                                        String(option.value) === String(value)
+                                            ? 'bg-teal-50 text-teal-700'
+                                            : 'hover:bg-slate-50 text-slate-700'
+                                    )}
+                                >
+                                    <div className="flex flex-col items-start">
+                                        <span className="font-medium">{option.label}</span>
+                                        {option.subLabel && (
+                                            <span className="text-xs text-slate-400">{option.subLabel}</span>
+                                        )}
+                                    </div>
+                                    {String(option.value) === String(value) && (
+                                        <Check className="h-4 w-4 text-teal-600" />
+                                    )}
+                                </button>
+                            ))
+                        )}
+                    </div>
+                </div>,
+                document.body
+            )}
             {error && <p className="mt-1.5 text-sm text-red-600 font-medium">{error}</p>}
         </div>
     );
