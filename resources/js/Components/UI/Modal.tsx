@@ -37,29 +37,31 @@ export default function Modal({
                 <Dialog.Content
                     className={clsx(
                         'fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50',
-                        'bg-white rounded-2xl shadow-2xl shadow-slate-900/10 w-full p-6',
+                        'bg-white rounded-2xl shadow-2xl shadow-slate-900/10 w-full',
                         'animate-in fade-in zoom-in-95 duration-200',
-                        'max-h-[85vh] overflow-y-auto',
-                        sizeClasses[size]
+                        'max-h-[85vh] flex flex-col',
+                        // ✅ overflow-visible عشان الـ dropdown ما ينقص
+                        'overflow-visible',
+                        sizeClasses[size],
                     )}
                     dir="rtl"
                     onPointerDownOutside={(e) => {
-                        if (document.body.hasAttribute('data-searchable-open')) {
-                            e.preventDefault();
-                        }
-                    }}
-                    onFocusOutside={(e) => {
-                        if (document.body.hasAttribute('data-searchable-open')) {
+                        const orig = (e as any).detail?.originalEvent;
+                        const target = (orig?.target || e.target) as HTMLElement;
+                        if (target?.closest?.('[data-searchable-select-dropdown]')) {
                             e.preventDefault();
                         }
                     }}
                     onInteractOutside={(e) => {
-                        if (document.body.hasAttribute('data-searchable-open')) {
+                        const orig = (e as any).detail?.originalEvent;
+                        const target = (orig?.target || e.target) as HTMLElement;
+                        if (target?.closest?.('[data-searchable-select-dropdown]')) {
                             e.preventDefault();
                         }
                     }}
                 >
-                    <div className="flex items-start justify-between mb-5 pb-4 border-b border-slate-100">
+                    {/* ─── Header (ثابت) ─── */}
+                    <div className="flex items-start justify-between p-6 pb-4 border-b border-slate-100 shrink-0">
                         <div>
                             <Dialog.Title className="text-xl font-bold text-slate-800">
                                 {title}
@@ -78,7 +80,11 @@ export default function Modal({
                             </Dialog.Close>
                         )}
                     </div>
-                    {children}
+
+                    {/* ─── Body (يسكرول) ─── */}
+                    <div className="p-6 pt-5 overflow-y-auto flex-1">
+                        {children}
+                    </div>
                 </Dialog.Content>
             </Dialog.Portal>
         </Dialog.Root>
@@ -92,7 +98,12 @@ interface ModalFooterProps {
 
 export function ModalFooter({ children, className }: ModalFooterProps) {
     return (
-        <div className={clsx('flex items-center justify-end gap-3 mt-6 pt-5 border-t border-slate-100', className)}>
+        <div
+            className={clsx(
+                'flex items-center justify-end gap-3 mt-6 pt-5 border-t border-slate-100',
+                className,
+            )}
+        >
             {children}
         </div>
     );
