@@ -54,6 +54,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::resource('packages', PackageController::class)->except(['create', 'edit']);
     Route::post('packages/{package}/generate-groups', [PackageController::class, 'generateGroups'])->name('packages.generate-groups');
+    Route::post('packages/{package}/generate-sessions', [PackageController::class, 'generateSessions'])->name('packages.generate-sessions');
 
     Route::resource('groups', ProgramGroupController::class)->except(['create', 'edit']);
     Route::post('groups/{group}/trainees', [ProgramGroupController::class, 'addTrainee'])->name('groups.trainees.add');

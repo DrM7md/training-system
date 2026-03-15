@@ -25,7 +25,6 @@ import Button from '@/Components/UI/Button';
 import Badge from '@/Components/UI/Badge';
 import PageHeader from '@/Components/UI/PageHeader';
 import Modal from '@/Components/UI/Modal';
-import SearchableSelect from '@/Components/UI/SearchableSelect';
 import clsx from 'clsx';
 import { formatDate } from '@/Utils/helpers';
 
@@ -1174,21 +1173,24 @@ export default function Index({ sessions, halls, trainers, currentDate, viewType
                 <div className="space-y-5">
                     {/* Step 1: Select Program */}
                     <div>
-                        <SearchableSelect
-                            label="البرنامج التدريبي"
+                        <label className="block text-sm font-bold text-slate-700 mb-2">البرنامج التدريبي</label>
+                        <select
                             value={selectedProgramId || ''}
-                            onChange={(val) => {
-                                setSelectedProgramId(val ? Number(val) : null);
+                            onChange={(e) => {
+                                setSelectedProgramId(e.target.value ? Number(e.target.value) : null);
                                 setSelectedPackageId(null);
                                 setSelectedGroupIds([]);
                             }}
-                            options={programs
+                            className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all"
+                        >
+                            <option value="">اختر البرنامج...</option>
+                            {programs
                                 .filter(p => p.packages.some(pkg => pkg.groups.length > 0))
-                                .map(p => ({ value: p.id, label: p.name }))
+                                .map(p => (
+                                    <option key={p.id} value={p.id}>{p.name}</option>
+                                ))
                             }
-                            placeholder="اختر البرنامج..."
-                            searchPlaceholder="ابحث عن برنامج..."
-                        />
+                        </select>
                     </div>
 
                     {/* Step 2: Select Package */}

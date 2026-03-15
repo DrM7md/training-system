@@ -4,12 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Models\AcademicYear;
 use App\Models\HallReservation;
+use App\Models\OfficialHoliday;
 use App\Models\Package;
 use App\Models\Program;
 use App\Models\ProgramGroup;
 use App\Models\Setting;
 use App\Models\TrainingHall;
+use App\Models\TrainingSession;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -188,5 +191,104 @@ class PackageController extends Controller
     {
         $package->delete();
         return back()->with('success', 'تم حذف الحقيبة بنجاح');
+    }
+
+    public function generateSessions(Request $request, Package $package)
+    {
+        $validated = $request->validate([
+            'start_date' => 'required|date',
+        ]);
+
+        $package->load('programGroups');
+        $groups = $package->programGroups;
+
+        if ($groups->isEmpty()) {
+            return back()->with('error', 'لا توجد مجموعات في هذه الحقيبة');
+        }
+
+        $startDate = Carbon::parse($validated['start_date']);
+        $sessionCount = $package->days;
+        $holidayDates = OfficialHoliday::getAllHolidayDates();
+
+        // Generate weekly dates from start_date, skipping Fridays and holidays
+        $dates = [];
+        $current = $startDate->copy();
+        $maxIterations = $sessionCount * 4;
+        $iterations = 0;
+
+        while (count($dates) < $sessionCount && $iterations < $maxIterations) {
+            $dateStr = $current->format('Y-m-d');
+
+            if (!in_array($dateStr, $holidayDates) && $current->dayOfWeek !== Carbon::FRIDAY) {
+                $dates[] = $dateStr;
+            }
+
+            $current->addWeek();
+            $iterations++;
+        }
+
+        $totalSessions = 0;
+        $conflicts = [];
+
+        foreach ($groups as $group) {
+            // Delete existing sessions for this group
+            $group->trainingSessions()->delete();
+
+            $dayNumber = 1;
+            $groupStartDate = null;
+            $groupEndDate = null;
+
+            foreach ($dates as $date) {
+                $sessionDate = Carbon::parse($date);
+
+                if (!$groupStartDate || $sessionDate->lt($groupStartDate)) {
+                    $groupStartDate = $sessionDate->copy();
+                }
+                if (!$groupEndDate || $sessionDate->gt($groupEndDate)) {
+                    $groupEndDate = $sessionDate->copy();
+                }
+
+                // Check hall conflicts
+                if ($group->training_hall_id) {
+                    $conflicting = TrainingSession::where('training_hall_id', $group->training_hall_id)
+                        ->where('program_group_id', '!=', $group->id)
+                        ->whereDate('date', $date)
+                        ->where('status', '!=', 'cancelled')
+                        ->first();
+
+                    if ($conflicting) {
+                        $conflicts[] = "{$group->name}: {$date}";
+                    }
+                }
+
+                TrainingSession::create([
+                    'program_group_id' => $group->id,
+                    'training_hall_id' => $group->training_hall_id,
+                    'trainer_id' => $group->trainer_id,
+                    'date' => $sessionDate,
+                    'day_number' => $dayNumber,
+                    'status' => 'scheduled',
+                ]);
+
+                $dayNumber++;
+                $totalSessions++;
+            }
+
+            if ($groupStartDate && $groupEndDate) {
+                $group->update([
+                    'start_date' => $groupStartDate,
+                    'end_date' => $groupEndDate,
+                ]);
+            }
+        }
+
+        $message = "تم توليد {$totalSessions} جلسة لـ {$groups->count()} مجموعة بنجاح";
+
+        if (!empty($conflicts)) {
+            $conflictList = implode('، ', array_slice($conflicts, 0, 5));
+            return back()->with('warning', "{$message}. تعارضات قاعات: {$conflictList}");
+        }
+
+        return back()->with('success', $message);
     }
 }

@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Components/Layout/AuthenticatedLayout';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { useState } from 'react';
-import { Plus, Edit2, Trash2, Package, Clock, Calendar, Search, ChevronDown, ChevronUp, BookOpen, User, Layers, Eye, Users, Minimize2, Maximize2, X, Download, Monitor, Wifi, MonitorSmartphone } from 'lucide-react';
+import { Plus, Edit2, Trash2, Package, Clock, Calendar, Search, ChevronDown, ChevronUp, BookOpen, User, Layers, Eye, Users, Minimize2, Maximize2, X, Download, Monitor, Wifi, MonitorSmartphone, CalendarDays } from 'lucide-react';
 import Card from '@/Components/UI/Card';
 import Button from '@/Components/UI/Button';
 import Badge from '@/Components/UI/Badge';
@@ -112,6 +112,8 @@ export default function Index({ packages, programs, supervisors, halls, filters,
     const [programFilter, setProgramFilter] = useState(filters.program_id || '');
     const [generatingFor, setGeneratingFor] = useState<PackageItem | null>(null);
     const generateForm = useForm({ male_count: 0, female_count: 0 });
+    const [generatingSessionsFor, setGeneratingSessionsFor] = useState<PackageItem | null>(null);
+    const [sessionsStartDate, setSessionsStartDate] = useState('');
 
     const groupedPackages: GroupedPackages[] = packages.data.reduce((acc: GroupedPackages[], pkg) => {
         if (!pkg.program) return acc;
@@ -415,7 +417,7 @@ export default function Index({ packages, programs, supervisors, halls, filters,
                                                     >
                                                         عرض التفاصيل والمجموعات
                                                     </button>
-                                                    {pkg.program_groups_count === 0 && (
+                                                    {pkg.program_groups_count === 0 ? (
                                                         <button
                                                             onClick={() => {
                                                                 const prog = programs.find(p => p.id === pkg.program_id);
@@ -430,6 +432,18 @@ export default function Index({ packages, programs, supervisors, halls, filters,
                                                         >
                                                             <Users className="h-4 w-4" />
                                                             توليد
+                                                        </button>
+                                                    ) : (
+                                                        <button
+                                                            onClick={() => {
+                                                                setSessionsStartDate('');
+                                                                setGeneratingSessionsFor(pkg);
+                                                            }}
+                                                            className="py-2 px-3 text-sm text-violet-600 hover:text-violet-700 hover:bg-violet-50 rounded-lg transition-colors font-medium flex items-center gap-1"
+                                                            title="توليد جلسات لجميع المجموعات"
+                                                        >
+                                                            <CalendarDays className="h-4 w-4" />
+                                                            جدولة
                                                         </button>
                                                     )}
                                                 </div>
@@ -789,6 +803,64 @@ export default function Index({ packages, programs, supervisors, halls, filters,
                             </Button>
                         </div>
                     </form>
+                )}
+            </Modal>
+            {/* Generate Sessions Modal */}
+            <Modal
+                open={!!generatingSessionsFor}
+                onClose={() => setGeneratingSessionsFor(null)}
+                title={`جدولة جلسات: ${generatingSessionsFor?.name || ''}`}
+            >
+                {generatingSessionsFor && (
+                    <div className="space-y-4">
+                        <div className="p-3 bg-violet-50 border border-violet-200 rounded-xl text-sm text-violet-800">
+                            <p className="font-bold mb-1">توليد جلسات أسبوعية لجميع المجموعات</p>
+                            <p>سيتم توليد <span className="font-bold">{generatingSessionsFor.days}</span> جلسة لكل مجموعة من المجموعات الـ <span className="font-bold">{generatingSessionsFor.program_groups_count}</span>، تتكرر أسبوعياً من تاريخ البداية مع تخطي أيام الجمعة والإجازات الرسمية.</p>
+                        </div>
+
+                        <Input
+                            label="تاريخ بداية أول جلسة"
+                            type="date"
+                            value={sessionsStartDate}
+                            onChange={(e) => setSessionsStartDate(e.target.value)}
+                            required
+                        />
+
+                        {sessionsStartDate && (
+                            <div className="p-3 bg-slate-50 rounded-xl text-sm text-slate-600">
+                                <p>اليوم: <span className="font-bold text-slate-800">
+                                    {new Date(sessionsStartDate).toLocaleDateString('ar-SA', { weekday: 'long' })}
+                                </span></p>
+                                <p className="mt-1">ستتكرر الجلسات كل <span className="font-bold text-slate-800">
+                                    {new Date(sessionsStartDate).toLocaleDateString('ar-SA', { weekday: 'long' })}
+                                </span> لمدة {generatingSessionsFor.days} أسبوع</p>
+                            </div>
+                        )}
+
+                        <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-700">
+                            تنبيه: سيتم حذف الجلسات السابقة لجميع المجموعات في هذه الحقيبة واستبدالها بالجلسات الجديدة.
+                        </div>
+
+                        <ModalFooter>
+                            <Button variant="secondary" onClick={() => setGeneratingSessionsFor(null)}>
+                                إلغاء
+                            </Button>
+                            <Button
+                                icon={<CalendarDays className="h-4 w-4" />}
+                                disabled={!sessionsStartDate}
+                                onClick={() => {
+                                    router.post(route('packages.generate-sessions', generatingSessionsFor.id), {
+                                        start_date: sessionsStartDate,
+                                    }, {
+                                        preserveScroll: true,
+                                        onSuccess: () => setGeneratingSessionsFor(null),
+                                    });
+                                }}
+                            >
+                                توليد الجلسات
+                            </Button>
+                        </ModalFooter>
+                    </div>
                 )}
             </Modal>
         </AuthenticatedLayout>
