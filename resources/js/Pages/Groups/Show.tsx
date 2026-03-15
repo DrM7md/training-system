@@ -89,6 +89,8 @@ export default function Show({ group, employees }: Props) {
     );
     const [editingSession, setEditingSession] = useState<Session | null>(null);
     const [editSessionDate, setEditSessionDate] = useState('');
+    const [genMode, setGenMode] = useState<'weekly' | 'manual'>('weekly');
+    const [weeklyStartDate, setWeeklyStartDate] = useState('');
 
     const addTraineeForm = useForm({ employee_id: '' });
     const sessionForm = useForm({ dates: sessionDates });
@@ -124,18 +126,30 @@ export default function Show({ group, employees }: Props) {
     };
 
     const handleGenerateSessions = () => {
-        const validDates = sessionDates.filter(d => d);
-        if (validDates.length === 0) {
-            alert('الرجاء تحديد تاريخ واحد على الأقل');
-            return;
-        }
-
-        router.post(route('groups.generate-sessions', group.id), { dates: sessionDates }, {
-            preserveScroll: true,
-            onSuccess: () => {
-                setShowGenerateSessions(false);
+        if (genMode === 'weekly') {
+            if (!weeklyStartDate) {
+                alert('الرجاء تحديد تاريخ البداية');
+                return;
             }
-        });
+            router.post(route('groups.generate-sessions', group.id), {
+                mode: 'weekly',
+                start_date: weeklyStartDate,
+                session_count: group.package.days,
+            }, {
+                preserveScroll: true,
+                onSuccess: () => setShowGenerateSessions(false),
+            });
+        } else {
+            const validDates = sessionDates.filter(d => d);
+            if (validDates.length === 0) {
+                alert('الرجاء تحديد تاريخ واحد على الأقل');
+                return;
+            }
+            router.post(route('groups.generate-sessions', group.id), { mode: 'manual', dates: sessionDates }, {
+                preserveScroll: true,
+                onSuccess: () => setShowGenerateSessions(false),
+            });
+        }
     };
 
     const handleUpdateSession = () => {
@@ -520,25 +534,78 @@ export default function Show({ group, employees }: Props) {
                 size="lg"
             >
                 <div className="space-y-4">
-                    <p className="text-sm text-slate-600 bg-slate-50 p-3 rounded-xl">
-                        حدد تاريخ كل يوم تدريبي. عدد أيام الحقيبة: <strong>{group.package.days}</strong> يوم
-                    </p>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {Array.from({ length: group.package.days }, (_, i) => (
-                            <div key={i} className="flex items-center gap-3">
-                                <span className="text-sm font-semibold text-slate-600 whitespace-nowrap min-w-[60px]">
-                                    اليوم {i + 1}
-                                </span>
-                                <Input
-                                    type="date"
-                                    value={sessionDates[i] || ''}
-                                    onChange={(e) => updateSessionDate(i, e.target.value)}
-                                    className="flex-1"
-                                />
-                            </div>
-                        ))}
+                    {/* Mode Tabs */}
+                    <div className="flex gap-1 bg-slate-100 p-1 rounded-xl">
+                        <button
+                            type="button"
+                            onClick={() => setGenMode('weekly')}
+                            className={`flex-1 py-2 px-3 text-sm font-medium rounded-lg transition-all ${
+                                genMode === 'weekly'
+                                    ? 'bg-white text-teal-700 shadow-sm'
+                                    : 'text-slate-500 hover:text-slate-700'
+                            }`}
+                        >
+                            تكرار أسبوعي تلقائي
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setGenMode('manual')}
+                            className={`flex-1 py-2 px-3 text-sm font-medium rounded-lg transition-all ${
+                                genMode === 'manual'
+                                    ? 'bg-white text-teal-700 shadow-sm'
+                                    : 'text-slate-500 hover:text-slate-700'
+                            }`}
+                        >
+                            تحديد يدوي
+                        </button>
                     </div>
+
+                    {genMode === 'weekly' ? (
+                        <>
+                            <div className="bg-teal-50 border border-teal-200 rounded-xl p-3 text-sm text-teal-700">
+                                حدد تاريخ أول جلسة وسيتم توليد <strong>{group.package.days}</strong> جلسة تلقائياً
+                                كل أسبوع في نفس اليوم، مع تخطي الإجازات الرسمية وأيام الجمعة.
+                            </div>
+                            <Input
+                                label="تاريخ أول جلسة"
+                                type="date"
+                                value={weeklyStartDate}
+                                onChange={(e) => setWeeklyStartDate(e.target.value)}
+                                required
+                            />
+                            {weeklyStartDate && (
+                                <div className="text-sm text-slate-500 bg-slate-50 rounded-lg p-3">
+                                    سيتم التكرار كل يوم <strong className="text-slate-700">
+                                        {new Date(weeklyStartDate).toLocaleDateString('ar-SA', { weekday: 'long' })}
+                                    </strong> بدءاً من{' '}
+                                    <strong className="text-slate-700">
+                                        {new Date(weeklyStartDate).toLocaleDateString('ar-SA')}
+                                    </strong>
+                                </div>
+                            )}
+                        </>
+                    ) : (
+                        <>
+                            <p className="text-sm text-slate-600 bg-slate-50 p-3 rounded-xl">
+                                حدد تاريخ كل يوم تدريبي. عدد أيام الحقيبة: <strong>{group.package.days}</strong> يوم
+                            </p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                {Array.from({ length: group.package.days }, (_, i) => (
+                                    <div key={i} className="flex items-center gap-3">
+                                        <span className="text-sm font-semibold text-slate-600 whitespace-nowrap min-w-[60px]">
+                                            اليوم {i + 1}
+                                        </span>
+                                        <Input
+                                            type="date"
+                                            value={sessionDates[i] || ''}
+                                            onChange={(e) => updateSessionDate(i, e.target.value)}
+                                            className="flex-1"
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        </>
+                    )}
 
                     {group.training_sessions.length > 0 && (
                         <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm text-amber-700">

@@ -5,7 +5,9 @@
       "Bash(npm run:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(python update_server.py)",
+      "Bash(find /c/laragon/www/training-system/database/migrations -name *training_session* -o -name *program_group* -o -name *package*)"
     ]
   }
 }

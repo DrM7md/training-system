@@ -11,6 +11,7 @@ use App\Models\Trainee;
 use App\Models\Trainer;
 use App\Models\TrainingHall;
 use App\Models\TrainingSession;
+use App\Models\OfficialHoliday;
 use App\Models\AcademicYear;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -136,6 +137,12 @@ class ProgramGroupController extends Controller
 
     public function generateSessions(Request $request, ProgramGroup $group)
     {
+        $mode = $request->input('mode', 'manual'); // 'manual' or 'weekly'
+
+        if ($mode === 'weekly') {
+            return $this->generateWeeklySessions($request, $group);
+        }
+
         $validated = $request->validate([
             'dates' => 'required|array|min:1',
             'dates.*' => 'nullable|date',
@@ -143,6 +150,42 @@ class ProgramGroupController extends Controller
 
         $validDates = array_filter($validated['dates'], fn($d) => !empty($d));
 
+        return $this->createSessionsFromDates($group, $validDates);
+    }
+
+    protected function generateWeeklySessions(Request $request, ProgramGroup $group)
+    {
+        $validated = $request->validate([
+            'start_date' => 'required|date',
+            'session_count' => 'required|integer|min:1|max:100',
+        ]);
+
+        $startDate = Carbon::parse($validated['start_date']);
+        $sessionCount = (int) $validated['session_count'];
+        $holidayDates = OfficialHoliday::getAllHolidayDates();
+
+        $dates = [];
+        $current = $startDate->copy();
+        $maxIterations = $sessionCount * 4; // Safety limit
+        $iterations = 0;
+
+        while (count($dates) < $sessionCount && $iterations < $maxIterations) {
+            $dateStr = $current->format('Y-m-d');
+
+            // Skip if it's a holiday or Friday (weekend)
+            if (!in_array($dateStr, $holidayDates) && $current->dayOfWeek !== Carbon::FRIDAY) {
+                $dates[] = $dateStr;
+            }
+
+            $current->addWeek();
+            $iterations++;
+        }
+
+        return $this->createSessionsFromDates($group, $dates);
+    }
+
+    protected function createSessionsFromDates(ProgramGroup $group, array $validDates)
+    {
         // Check for hall conflicts before proceeding
         $conflicts = [];
         if ($group->training_hall_id) {
@@ -198,10 +241,10 @@ class ProgramGroupController extends Controller
 
         if (!empty($conflicts)) {
             $conflictList = implode('، ', $conflicts);
-            return back()->with('warning', "تم توليد الجلسات، لكن يوجد تعارض في القاعة بالتواريخ التالية: {$conflictList}");
+            return back()->with('warning', "تم توليد {$dayNumber} جلسة، لكن يوجد تعارض في القاعة بالتواريخ التالية: {$conflictList}");
         }
 
-        return back()->with('success', 'تم توليد الجلسات بنجاح');
+        return back()->with('success', "تم توليد " . ($dayNumber - 1) . " جلسة بنجاح");
     }
 
     public function updateSession(Request $request, TrainingSession $session)

@@ -17,6 +17,7 @@ import {
     ClipboardList,
     Banknote,
     Award,
+    CalendarOff,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useSidebar } from '@/Hooks/useSidebar';
@@ -40,6 +41,7 @@ const menuItems: MenuItem[] = [
             { title: 'الحقائب التدريبية', icon: Package, href: '/packages' },
             { title: 'المجموعات', icon: Layers, href: '/groups' },
             { title: 'جدولة القاعات', icon: Calendar, href: '/schedule' },
+            { title: 'الإجازات الرسمية', icon: CalendarOff, href: '/official-holidays' },
         ],
     },
     {

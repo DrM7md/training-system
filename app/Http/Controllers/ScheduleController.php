@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AcademicYear;
+use App\Models\OfficialHoliday;
 use App\Models\Program;
 use App\Models\Trainer;
 use App\Models\TrainingHall;
@@ -145,6 +146,8 @@ class ScheduleController extends Controller
             ->filter(fn($p) => collect($p['packages'])->flatMap(fn($pkg) => $pkg['groups'])->isNotEmpty())
             ->values();
 
+        $holidays = OfficialHoliday::orderBy('start_date')->get(['id', 'name', 'start_date', 'end_date', 'color']);
+
         return Inertia::render('Schedule/Index', [
             'sessions' => $sessions,
             'halls' => $halls,
@@ -152,6 +155,7 @@ class ScheduleController extends Controller
             'currentDate' => $dateStr,
             'viewType' => $viewType,
             'programs' => $programs,
+            'holidays' => $holidays,
         ]);
     }
 

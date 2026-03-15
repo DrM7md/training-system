@@ -99,6 +99,14 @@ interface TrainerOption {
     name: string;
 }
 
+interface Holiday {
+    id: number;
+    name: string;
+    start_date: string;
+    end_date: string;
+    color: string;
+}
+
 interface Props {
     sessions: Session[];
     halls: Hall[];
@@ -106,6 +114,7 @@ interface Props {
     currentDate: string;
     viewType: 'daily' | 'weekly' | 'monthly';
     programs: ProgramOption[];
+    holidays: Holiday[];
 }
 
 type ViewType = 'daily' | 'weekly' | 'monthly';
@@ -192,7 +201,7 @@ function HallSelect({ halls, sessions, currentSession, value, onChange, genderPr
     );
 }
 
-export default function Index({ sessions, halls, trainers, currentDate, viewType: serverViewType, programs }: Props) {
+export default function Index({ sessions, halls, trainers, currentDate, viewType: serverViewType, programs, holidays = [] }: Props) {
     const [viewType, setViewType] = useState<ViewType>(serverViewType || 'daily');
     const [selectedDate, setSelectedDate] = useState(currentDate || getTodayStr());
     const [selectedSession, setSelectedSession] = useState<Session | null>(null);
@@ -760,6 +769,19 @@ export default function Index({ sessions, halls, trainers, currentDate, viewType
                 {viewType === 'monthly' && (() => {
                     const { year, month, firstDay, daysInMonth } = getMonthData();
 
+                    // Build holiday lookup for this month
+                    const holidayMap = new Map<string, { name: string; color: string }>();
+                    holidays.forEach(h => {
+                        const start = new Date(h.start_date);
+                        const end = new Date(h.end_date);
+                        const cur = new Date(start);
+                        while (cur <= end) {
+                            const key = formatLocalDate(cur.getFullYear(), cur.getMonth(), cur.getDate());
+                            holidayMap.set(key, { name: h.name, color: h.color });
+                            cur.setDate(cur.getDate() + 1);
+                        }
+                    });
+
                     return (
                         <Card padding="none">
                             {/* Day headers */}
@@ -788,6 +810,7 @@ export default function Index({ sessions, halls, trainers, currentDate, viewType
                                     const isToday = dayStr === todayStr;
                                     const daySessions = sessions.filter(s => s.date === dayStr);
                                     const isFriday = (firstDay + idx) % 7 === 5;
+                                    const holiday = holidayMap.get(dayStr);
 
                                     // Group sessions by hall for display
                                     const uniquePrograms = new Map<number, { name: string; gender: string; count: number }>();
@@ -810,8 +833,9 @@ export default function Index({ sessions, halls, trainers, currentDate, viewType
                                             className={clsx(
                                                 'min-h-[140px] border-b border-r border-slate-100 transition-all relative group',
                                                 isToday && 'bg-teal-50/40 ring-2 ring-inset ring-teal-400',
-                                                isFriday && 'bg-emerald-50/20',
-                                                dragSessionId && 'hover:bg-blue-50',
+                                                holiday && 'bg-red-50/60',
+                                                isFriday && !holiday && 'bg-emerald-50/20',
+                                                dragSessionId && !holiday && 'hover:bg-blue-50',
                                             )}
                                             onDragOver={handleDragOver}
                                             onDrop={(e) => handleDrop(e, dayStr)}
@@ -826,14 +850,25 @@ export default function Index({ sessions, halls, trainers, currentDate, viewType
                                                 )}>
                                                     {day}
                                                 </span>
-                                                <button
-                                                    onClick={() => openAssignModal(dayStr)}
-                                                    className="opacity-0 group-hover:opacity-100 p-1 rounded-lg hover:bg-teal-100 text-teal-600 transition-all"
-                                                    title="إضافة جلسات"
-                                                >
-                                                    <Plus className="h-4 w-4" />
-                                                </button>
+                                                {!holiday && (
+                                                    <button
+                                                        onClick={() => openAssignModal(dayStr)}
+                                                        className="opacity-0 group-hover:opacity-100 p-1 rounded-lg hover:bg-teal-100 text-teal-600 transition-all"
+                                                        title="إضافة جلسات"
+                                                    >
+                                                        <Plus className="h-4 w-4" />
+                                                    </button>
+                                                )}
                                             </div>
+                                            {holiday && (
+                                                <div
+                                                    className="mx-1.5 mb-1 px-2 py-1 rounded-md text-[10px] font-bold text-white text-center truncate"
+                                                    style={{ backgroundColor: holiday.color || '#ef4444' }}
+                                                    title={holiday.name}
+                                                >
+                                                    {holiday.name}
+                                                </div>
+                                            )}
 
                                             {/* Sessions */}
                                             <div className="px-1.5 pb-1.5 space-y-1">

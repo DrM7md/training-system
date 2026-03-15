@@ -21,6 +21,7 @@ use App\Http\Controllers\AssignmentController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\ImportController;
+use App\Http\Controllers\OfficialHolidayController;
 use App\Exports\ProgramsExport;
 use App\Exports\PackagesExport;
 use App\Exports\GroupsExport;
@@ -99,6 +100,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('export/schools', fn() => Excel::download(new SchoolsExport, 'المدارس.xlsx'))->name('export.schools');
     Route::get('export/schools-template', fn() => Excel::download(new SchoolsTemplateExport, 'قالب_استيراد_المدارس.xlsx'))->name('export.schools-template');
     Route::post('import/schools', [ImportController::class, 'schools'])->name('import.schools');
+
+    Route::resource('official-holidays', OfficialHolidayController::class)->except(['create', 'edit', 'show']);
 
     Route::get('settings', [SettingController::class, 'index'])->name('settings.index');
     Route::post('settings', [SettingController::class, 'update'])->name('settings.update');
