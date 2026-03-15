@@ -19,6 +19,7 @@ import {
     Pencil,
     Check,
     X,
+    Download,
 } from 'lucide-react';
 import Card from '@/Components/UI/Card';
 import Button from '@/Components/UI/Button';
@@ -442,6 +443,15 @@ export default function Index({ sessions, halls, trainers, currentDate, viewType
             <PageHeader
                 title="جدولة القاعات التدريبية"
                 description="عرض وإدارة جدول القاعات والبرامج"
+                action={
+                    <a
+                        href={route('export.schedule')}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-teal-700 bg-teal-50 border border-teal-200 rounded-xl hover:bg-teal-100 transition-colors"
+                    >
+                        <Download className="h-4 w-4" />
+                        تصدير Excel
+                    </a>
+                }
             />
 
             <div className="space-y-6">

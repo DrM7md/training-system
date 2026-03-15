@@ -30,6 +30,7 @@ use App\Exports\TrainersTemplateExport;
 use App\Exports\SchoolsExport;
 use App\Exports\SchoolsTemplateExport;
 use App\Exports\ProgramsTemplateExport;
+use App\Exports\ScheduleExport;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Route;
 
@@ -99,6 +100,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('export/trainers-template', fn() => Excel::download(new TrainersTemplateExport, 'قالب_استيراد_المدربين.xlsx'))->name('export.trainers-template');
     Route::post('import/trainers', [ImportController::class, 'trainers'])->name('import.trainers');
     Route::get('export/schools', fn() => Excel::download(new SchoolsExport, 'المدارس.xlsx'))->name('export.schools');
+    Route::get('export/schedule', fn() => Excel::download(new ScheduleExport, 'جدول_القاعات.xlsx'))->name('export.schedule');
     Route::get('export/schools-template', fn() => Excel::download(new SchoolsTemplateExport, 'قالب_استيراد_المدارس.xlsx'))->name('export.schools-template');
     Route::post('import/schools', [ImportController::class, 'schools'])->name('import.schools');
 
