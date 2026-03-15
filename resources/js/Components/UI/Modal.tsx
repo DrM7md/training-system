@@ -44,14 +44,16 @@ export default function Modal({
                     )}
                     dir="rtl"
                     onPointerDownOutside={(e) => {
-                        const target = e.target as HTMLElement;
-                        if (target.closest?.('[data-searchable-select-dropdown]')) {
+                        const originalEvent = (e as any).detail?.originalEvent;
+                        const target = (originalEvent?.target || e.target) as HTMLElement;
+                        if (target?.closest?.('[data-searchable-select-dropdown]')) {
                             e.preventDefault();
                         }
                     }}
                     onInteractOutside={(e) => {
-                        const target = e.target as HTMLElement;
-                        if (target.closest?.('[data-searchable-select-dropdown]')) {
+                        const originalEvent = (e as any).detail?.originalEvent;
+                        const target = (originalEvent?.target || e.target) as HTMLElement;
+                        if (target?.closest?.('[data-searchable-select-dropdown]')) {
                             e.preventDefault();
                         }
                     }}
