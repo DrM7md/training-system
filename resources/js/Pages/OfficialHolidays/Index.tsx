@@ -41,11 +41,11 @@ function getDaysDiff(start: string, end: string): number {
 }
 
 function formatDateAr(d: string): string {
-    return new Date(d).toLocaleDateString('ar-SA', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-    });
+    const date = new Date(d);
+    const day = date.getDate();
+    const year = date.getFullYear();
+    const month = date.toLocaleDateString('ar-SA', { month: 'long' });
+    return `${day} ${month} ${year}`;
 }
 
 function getDayName(d: string): string {
