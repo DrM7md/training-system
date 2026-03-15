@@ -42,19 +42,6 @@ export default function SearchableSelect({
 
     const selectedOption = options.find((opt) => String(opt.value) === String(value));
 
-    const updateDropdownPosition = useCallback(() => {
-        if (buttonRef.current) {
-            const rect = buttonRef.current.getBoundingClientRect();
-            setDropdownStyle({
-                position: 'fixed',
-                top: rect.bottom + 4,
-                left: rect.left,
-                width: rect.width,
-                zIndex: 9999,
-            });
-        }
-    }, []);
-
     const filteredOptions = useMemo(() => {
         if (!searchQuery) return options;
         const query = searchQuery.toLowerCase();
@@ -65,9 +52,44 @@ export default function SearchableSelect({
         );
     }, [options, searchQuery]);
 
+    // Calculate dropdown position relative to viewport
+    const updatePosition = useCallback(() => {
+        if (!buttonRef.current) return;
+        const rect = buttonRef.current.getBoundingClientRect();
+        const spaceBelow = window.innerHeight - rect.bottom;
+        const dropdownHeight = 280; // max-h-60 = 240px + search bar ~40px
+        const showAbove = spaceBelow < dropdownHeight && rect.top > dropdownHeight;
+
+        setDropdownStyle({
+            position: 'fixed',
+            left: rect.left,
+            width: rect.width,
+            zIndex: 99999,
+            ...(showAbove
+                ? { bottom: window.innerHeight - rect.top + 4 }
+                : { top: rect.bottom + 4 }),
+        });
+    }, []);
+
+    // Signal to Modal that a SearchableSelect dropdown is active
     useEffect(() => {
-        function handleClickOutside(event: MouseEvent) {
-            const target = event.target as Node;
+        if (isOpen) {
+            document.body.setAttribute('data-searchable-open', 'true');
+            updatePosition();
+            // Focus search input after position is set
+            requestAnimationFrame(() => inputRef.current?.focus());
+        } else {
+            document.body.removeAttribute('data-searchable-open');
+        }
+        return () => document.body.removeAttribute('data-searchable-open');
+    }, [isOpen, updatePosition]);
+
+    // Close on outside click
+    useEffect(() => {
+        if (!isOpen) return;
+
+        const handleMouseDown = (e: MouseEvent) => {
+            const target = e.target as Node;
             if (
                 containerRef.current && !containerRef.current.contains(target) &&
                 dropdownRef.current && !dropdownRef.current.contains(target)
@@ -75,17 +97,36 @@ export default function SearchableSelect({
                 setIsOpen(false);
                 setSearchQuery('');
             }
-        }
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
+        };
 
+        document.addEventListener('mousedown', handleMouseDown);
+        return () => document.removeEventListener('mousedown', handleMouseDown);
+    }, [isOpen]);
+
+    // Close on scroll (any scrollable ancestor) and update on resize
     useEffect(() => {
-        if (isOpen) {
-            updateDropdownPosition();
-            inputRef.current?.focus();
-        }
-    }, [isOpen, updateDropdownPosition]);
+        if (!isOpen) return;
+
+        const close = () => {
+            setIsOpen(false);
+            setSearchQuery('');
+        };
+
+        const handleScroll = (e: Event) => {
+            // Don't close if scrolling inside the dropdown itself
+            if (dropdownRef.current?.contains(e.target as Node)) return;
+            close();
+        };
+
+        // Listen on capture phase to catch all scroll events (including inside modals)
+        document.addEventListener('scroll', handleScroll, true);
+        window.addEventListener('resize', close);
+
+        return () => {
+            document.removeEventListener('scroll', handleScroll, true);
+            window.removeEventListener('resize', close);
+        };
+    }, [isOpen]);
 
     const handleSelect = (optionValue: string | number) => {
         onChange(optionValue);
@@ -99,6 +140,12 @@ export default function SearchableSelect({
         setSearchQuery('');
     };
 
+    const handleToggle = () => {
+        if (disabled) return;
+        setIsOpen(prev => !prev);
+        if (isOpen) setSearchQuery('');
+    };
+
     return (
         <div className="w-full" ref={containerRef}>
             {label && (
@@ -107,60 +154,60 @@ export default function SearchableSelect({
                     {required && <span className="text-red-500 mr-1">*</span>}
                 </label>
             )}
-            <div className="relative">
-                <button
-                    ref={buttonRef}
-                    type="button"
-                    onClick={() => !disabled && setIsOpen(!isOpen)}
-                    disabled={disabled}
-                    className={clsx(
-                        'w-full px-4 py-2.5 border rounded-xl text-sm text-right transition-all duration-200 flex items-center justify-between gap-2',
-                        'focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500',
-                        error
-                            ? 'border-red-300 focus:ring-red-500/20 focus:border-red-500 bg-red-50/50'
-                            : 'border-slate-200 hover:border-slate-300 bg-white',
-                        disabled && 'bg-slate-50 cursor-not-allowed opacity-60'
-                    )}
-                >
-                    <span className={clsx(!selectedOption && 'text-slate-400')}>
-                        {selectedOption ? (
-                            <span className="flex flex-col items-start">
-                                <span>{selectedOption.label}</span>
-                                {selectedOption.subLabel && (
-                                    <span className="text-xs text-slate-400">{selectedOption.subLabel}</span>
-                                )}
-                            </span>
-                        ) : (
-                            placeholder
-                        )}
-                    </span>
-                    <div className="flex items-center gap-1">
-                        {selectedOption && !disabled && (
-                            <button
-                                type="button"
-                                onClick={handleClear}
-                                className="p-1 hover:bg-slate-100 rounded-lg transition-colors"
-                            >
-                                <X className="h-3.5 w-3.5 text-slate-400" />
-                            </button>
-                        )}
-                        <ChevronDown
-                            className={clsx(
-                                'h-4 w-4 text-slate-400 transition-transform',
-                                isOpen && 'rotate-180'
+            <button
+                ref={buttonRef}
+                type="button"
+                onClick={handleToggle}
+                disabled={disabled}
+                className={clsx(
+                    'w-full px-4 py-2.5 border rounded-xl text-sm text-right transition-all duration-200 flex items-center justify-between gap-2',
+                    'focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500',
+                    error
+                        ? 'border-red-300 focus:ring-red-500/20 focus:border-red-500 bg-red-50/50'
+                        : 'border-slate-200 hover:border-slate-300 bg-white',
+                    disabled && 'bg-slate-50 cursor-not-allowed opacity-60'
+                )}
+            >
+                <span className={clsx(!selectedOption && 'text-slate-400')}>
+                    {selectedOption ? (
+                        <span className="flex flex-col items-start">
+                            <span>{selectedOption.label}</span>
+                            {selectedOption.subLabel && (
+                                <span className="text-xs text-slate-400">{selectedOption.subLabel}</span>
                             )}
-                        />
-                    </div>
-                </button>
+                        </span>
+                    ) : (
+                        placeholder
+                    )}
+                </span>
+                <div className="flex items-center gap-1">
+                    {selectedOption && !disabled && (
+                        <span
+                            role="button"
+                            tabIndex={-1}
+                            onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
+                            onClick={handleClear}
+                            className="p-1 hover:bg-slate-100 rounded-lg transition-colors"
+                        >
+                            <X className="h-3.5 w-3.5 text-slate-400" />
+                        </span>
+                    )}
+                    <ChevronDown
+                        className={clsx(
+                            'h-4 w-4 text-slate-400 transition-transform',
+                            isOpen && 'rotate-180'
+                        )}
+                    />
+                </div>
+            </button>
 
-            </div>
             {isOpen && createPortal(
                 <div
                     ref={dropdownRef}
                     dir="rtl"
                     style={dropdownStyle}
                     data-searchable-select-dropdown
-                    onPointerDown={(e) => e.stopPropagation()}
+                    onMouseDown={(e) => e.preventDefault()}
                     className="bg-white border border-slate-200 rounded-xl shadow-xl shadow-slate-200/50 overflow-hidden"
                 >
                     <div className="p-2 border-b border-slate-100">
@@ -171,6 +218,13 @@ export default function SearchableSelect({
                                 type="text"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Escape') {
+                                        setIsOpen(false);
+                                        setSearchQuery('');
+                                        buttonRef.current?.focus();
+                                    }
+                                }}
                                 placeholder={searchPlaceholder}
                                 className="w-full pr-9 pl-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
                             />
@@ -183,12 +237,13 @@ export default function SearchableSelect({
                             </div>
                         ) : (
                             filteredOptions.map((option) => (
-                                <button
+                                <div
                                     key={option.value}
-                                    type="button"
+                                    role="option"
+                                    aria-selected={String(option.value) === String(value)}
                                     onClick={() => handleSelect(option.value)}
                                     className={clsx(
-                                        'w-full px-4 py-2.5 text-right text-sm transition-colors flex items-center justify-between',
+                                        'w-full px-4 py-2.5 text-right text-sm transition-colors flex items-center justify-between cursor-pointer',
                                         String(option.value) === String(value)
                                             ? 'bg-teal-50 text-teal-700'
                                             : 'hover:bg-slate-50 text-slate-700'
@@ -203,7 +258,7 @@ export default function SearchableSelect({
                                     {String(option.value) === String(value) && (
                                         <Check className="h-4 w-4 text-teal-600" />
                                     )}
-                                </button>
+                                </div>
                             ))
                         )}
                     </div>
