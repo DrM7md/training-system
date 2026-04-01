@@ -195,8 +195,9 @@ export default function Show({ group, employees }: Props) {
     const visibleTrainees = showAllTrainees ? group.trainees : group.trainees.slice(0, TRAINEES_PREVIEW);
     const hasMoreTrainees = group.trainees.length > TRAINEES_PREVIEW;
     const today = new Date().toISOString().split('T')[0];
+    const totalSessions = group.training_sessions.length;
     const completedSessions = group.training_sessions.filter(s => s.status === 'completed' || s.date < today).length;
-    const progressPercent = group.package.days > 0 ? Math.round((completedSessions / group.package.days) * 100) : 0;
+    const progressPercent = totalSessions > 0 ? Math.round((completedSessions / totalSessions) * 100) : 0;
 
     // Compute dates from actual sessions
     const sessionDatesComputed = group.training_sessions.map(s => s.date).sort();
@@ -241,7 +242,7 @@ export default function Show({ group, employees }: Props) {
                     </div>
                     <div>
                         <p className="text-xs text-slate-500">الجلسات</p>
-                        <p className="text-sm font-bold text-slate-800">{group.training_sessions.length} / {group.package.days}</p>
+                        <p className="text-sm font-bold text-slate-800">{completedSessions} / {totalSessions}</p>
                     </div>
                 </div>
                 <div className="bg-white border border-slate-200 rounded-xl p-4 flex items-center gap-3">
