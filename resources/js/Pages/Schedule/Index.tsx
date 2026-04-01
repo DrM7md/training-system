@@ -424,16 +424,16 @@ export default function Index({ sessions, halls, trainers, currentDate, viewType
         e.dataTransfer.dropEffect = 'move';
     };
 
-    const handleDrop = (e: React.DragEvent, targetDate: string) => {
+    const handleDrop = (e: React.DragEvent, targetDate: string, targetHallId?: number) => {
         e.preventDefault();
         const sessionId = parseInt(e.dataTransfer.getData('text/plain'));
         if (!sessionId) return;
 
         const session = sessions.find(s => s.id === sessionId);
-        if (session && session.date !== targetDate) {
-            router.patch(route('schedule.sessions.move', sessionId), {
-                date: targetDate,
-            }, { preserveState: false });
+        if (session && (session.date !== targetDate || (targetHallId && session.training_hall.id !== targetHallId))) {
+            const data: Record<string, any> = { date: targetDate };
+            if (targetHallId) data.training_hall_id = targetHallId;
+            router.patch(route('schedule.sessions.move', sessionId), data, { preserveState: true, preserveScroll: true });
         }
         setDragSessionId(null);
     };
@@ -976,6 +976,9 @@ export default function Index({ sessions, halls, trainers, currentDate, viewType
                                                                         )}>
                                                                             {dayNamesShort[dayOfWeek]}
                                                                         </span>
+                                                                        <span className="text-[10px] text-slate-400">
+                                                                            {day} {monthNames[month]}
+                                                                        </span>
                                                                         {holiday && (
                                                                             <span
                                                                                 className="text-[10px] font-bold text-white px-1.5 py-0.5 rounded"
@@ -999,19 +1002,7 @@ export default function Index({ sessions, halls, trainers, currentDate, viewType
                                                                             dragSessionId && !holiday && 'hover:bg-blue-50',
                                                                         )}
                                                                         onDragOver={!holiday ? handleDragOver : undefined}
-                                                                        onDrop={!holiday ? (e) => {
-                                                                            e.preventDefault();
-                                                                            const sessionId = parseInt(e.dataTransfer.getData('text/plain'));
-                                                                            if (!sessionId) return;
-                                                                            const session = sessions.find(s => s.id === sessionId);
-                                                                            if (session && (session.date !== dayStr || session.training_hall.id !== hall.id)) {
-                                                                                router.patch(route('schedule.sessions.move', sessionId), {
-                                                                                    date: dayStr,
-                                                                                    training_hall_id: hall.id,
-                                                                                }, { preserveState: false });
-                                                                            }
-                                                                            setDragSessionId(null);
-                                                                        } : undefined}
+                                                                        onDrop={!holiday ? (e) => handleDrop(e, dayStr, hall.id) : undefined}
                                                                     >
                                                                         {cellSessions.length > 0 ? (
                                                                             <div className="space-y-1">
