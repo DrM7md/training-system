@@ -184,6 +184,64 @@ class ProgramGroupController extends Controller
         return $this->createSessionsFromDates($group, $dates);
     }
 
+    public function addSessions(Request $request, ProgramGroup $group)
+    {
+        $validated = $request->validate([
+            'count' => 'required|integer|min:1|max:50',
+        ]);
+
+        $existingSessions = $group->trainingSessions()->orderBy('date')->get();
+        $lastSession = $existingSessions->last();
+
+        if (!$lastSession) {
+            return back()->with('error', 'يجب توليد الجلسات أولاً قبل إضافة جلسات إضافية');
+        }
+
+        $count = (int) $validated['count'];
+        $lastDate = Carbon::parse($lastSession->date);
+        $lastDayNumber = $existingSessions->max('day_number');
+        $holidayDates = OfficialHoliday::getAllHolidayDates();
+
+        // Detect the weekly interval from existing sessions
+        $dates = $existingSessions->pluck('date')->map(fn($d) => Carbon::parse($d))->values();
+        $interval = $dates->count() >= 2
+            ? $dates[1]->diffInDays($dates[0])
+            : 7;
+
+        $newDates = [];
+        $current = $lastDate->copy()->addDays($interval);
+        $maxIterations = $count * 4;
+        $iterations = 0;
+
+        while (count($newDates) < $count && $iterations < $maxIterations) {
+            $dateStr = $current->format('Y-m-d');
+            if (!in_array($dateStr, $holidayDates) && $current->dayOfWeek !== Carbon::FRIDAY) {
+                $newDates[] = $dateStr;
+            }
+            $current->addDays($interval);
+            $iterations++;
+        }
+
+        $dayNumber = $lastDayNumber + 1;
+        foreach ($newDates as $date) {
+            TrainingSession::create([
+                'program_group_id' => $group->id,
+                'training_hall_id' => $group->training_hall_id,
+                'trainer_id' => $group->trainer_id,
+                'date' => Carbon::parse($date),
+                'day_number' => $dayNumber,
+                'status' => 'scheduled',
+            ]);
+            $dayNumber++;
+        }
+
+        // Update group end_date
+        $allDates = $group->trainingSessions()->pluck('date')->map(fn($d) => Carbon::parse($d));
+        $group->update(['end_date' => $allDates->max()]);
+
+        return back()->with('success', "تم إضافة " . count($newDates) . " جلسة إضافية");
+    }
+
     protected function createSessionsFromDates(ProgramGroup $group, array $validDates)
     {
         // Check for hall conflicts before proceeding

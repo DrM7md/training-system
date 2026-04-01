@@ -61,6 +61,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('groups/{group}/trainees', [ProgramGroupController::class, 'addTrainee'])->name('groups.trainees.add');
     Route::delete('groups/{group}/trainees/{trainee}', [ProgramGroupController::class, 'removeTrainee'])->name('groups.trainees.remove');
     Route::post('groups/{group}/generate-sessions', [ProgramGroupController::class, 'generateSessions'])->name('groups.generate-sessions');
+    Route::post('groups/{group}/add-sessions', [ProgramGroupController::class, 'addSessions'])->name('groups.add-sessions');
     Route::put('sessions/{session}', [ProgramGroupController::class, 'updateSession'])->name('sessions.update');
 
     Route::get('schedule', [ScheduleController::class, 'index'])->name('schedule.index');

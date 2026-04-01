@@ -91,6 +91,8 @@ export default function Show({ group, employees }: Props) {
     const [editSessionDate, setEditSessionDate] = useState('');
     const [genMode, setGenMode] = useState<'weekly' | 'manual'>('weekly');
     const [weeklyStartDate, setWeeklyStartDate] = useState('');
+    const [showAddSessions, setShowAddSessions] = useState(false);
+    const [addSessionCount, setAddSessionCount] = useState(1);
 
     const addTraineeForm = useForm({ employee_id: '' });
     const sessionForm = useForm({ dates: sessionDates });
@@ -171,6 +173,16 @@ export default function Show({ group, employees }: Props) {
     const cancelEditSession = () => {
         setEditingSessionId(null);
         setEditSessionDate('');
+    };
+
+    const handleAddSessions = () => {
+        router.post(route('groups.add-sessions', group.id), { count: addSessionCount }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setShowAddSessions(false);
+                setAddSessionCount(1);
+            },
+        });
     };
 
     const updateSessionDate = (index: number, date: string) => {
@@ -343,14 +355,25 @@ export default function Show({ group, employees }: Props) {
                             title="جلسات التدريب"
                             description={`${group.training_sessions.length} جلسة`}
                             action={
-                                <Button
-                                    size="sm"
-                                    variant="secondary"
-                                    icon={<RefreshCw className="h-4 w-4" />}
-                                    onClick={() => setShowGenerateSessions(true)}
-                                >
-                                    {group.training_sessions.length > 0 ? 'إعادة توليد' : 'توليد الجلسات'}
-                                </Button>
+                                <div className="flex items-center gap-2">
+                                    {group.training_sessions.length > 0 && (
+                                        <Button
+                                            size="sm"
+                                            icon={<Plus className="h-4 w-4" />}
+                                            onClick={() => setShowAddSessions(true)}
+                                        >
+                                            إضافة جلسات
+                                        </Button>
+                                    )}
+                                    <Button
+                                        size="sm"
+                                        variant="secondary"
+                                        icon={<RefreshCw className="h-4 w-4" />}
+                                        onClick={() => setShowGenerateSessions(true)}
+                                    >
+                                        {group.training_sessions.length > 0 ? 'إعادة توليد' : 'توليد الجلسات'}
+                                    </Button>
+                                </div>
                             }
                         />
 
@@ -653,6 +676,59 @@ export default function Show({ group, employees }: Props) {
                     </Button>
                     <Button onClick={handleGenerateSessions} icon={<RefreshCw className="h-4 w-4" />}>
                         توليد الجلسات
+                    </Button>
+                </ModalFooter>
+            </Modal>
+
+            {/* Add Extra Sessions Modal */}
+            <Modal
+                open={showAddSessions}
+                onClose={() => setShowAddSessions(false)}
+                title="إضافة جلسات إضافية"
+            >
+                <div className="space-y-4">
+                    <div className="bg-teal-50 border border-teal-200 rounded-xl p-3 text-sm text-teal-700">
+                        سيتم إضافة الجلسات بعد آخر جلسة موجودة، بنفس التكرار الأسبوعي مع تخطي الإجازات وأيام الجمعة.
+                    </div>
+                    <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-1.5">عدد الجلسات الإضافية</label>
+                        <div className="flex items-center gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setAddSessionCount(Math.max(1, addSessionCount - 1))}
+                                className="w-10 h-10 rounded-xl border border-slate-200 hover:bg-slate-100 transition-colors text-lg font-bold text-slate-600"
+                            >
+                                −
+                            </button>
+                            <input
+                                type="number"
+                                min={1}
+                                max={50}
+                                value={addSessionCount}
+                                onChange={(e) => setAddSessionCount(Math.max(1, Math.min(50, parseInt(e.target.value) || 1)))}
+                                className="w-20 text-center text-lg font-bold border border-slate-200 rounded-xl py-2 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setAddSessionCount(Math.min(50, addSessionCount + 1))}
+                                className="w-10 h-10 rounded-xl border border-slate-200 hover:bg-slate-100 transition-colors text-lg font-bold text-slate-600"
+                            >
+                                +
+                            </button>
+                        </div>
+                    </div>
+                    <div className="text-sm text-slate-500 bg-slate-50 rounded-lg p-3">
+                        الجلسات الحالية: <strong className="text-slate-700">{group.training_sessions.length}</strong>
+                        {' → '}
+                        بعد الإضافة: <strong className="text-slate-700">{group.training_sessions.length + addSessionCount}</strong>
+                    </div>
+                </div>
+                <ModalFooter>
+                    <Button variant="secondary" onClick={() => setShowAddSessions(false)}>
+                        إلغاء
+                    </Button>
+                    <Button onClick={handleAddSessions} icon={<Plus className="h-4 w-4" />}>
+                        إضافة {addSessionCount} جلسة
                     </Button>
                 </ModalFooter>
             </Modal>
