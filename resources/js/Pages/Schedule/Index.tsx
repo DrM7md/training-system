@@ -20,6 +20,7 @@ import {
     Check,
     X,
     Download,
+    Table2,
 } from 'lucide-react';
 import Card from '@/Components/UI/Card';
 import Button from '@/Components/UI/Button';
@@ -206,6 +207,7 @@ export default function Index({ sessions, halls, trainers, currentDate, viewType
     const [selectedDate, setSelectedDate] = useState(currentDate || getTodayStr());
     const [selectedSession, setSelectedSession] = useState<Session | null>(null);
     const [dailyTab, setDailyTab] = useState<'busy' | 'available'>('busy');
+    const [monthlyMode, setMonthlyMode] = useState<'calendar' | 'grid'>('calendar');
 
     // Monthly assign modal
     const [assignDate, setAssignDate] = useState<string | null>(null);
@@ -791,137 +793,263 @@ export default function Index({ sessions, halls, trainers, currentDate, viewType
                         }
                     });
 
+                    // All days of the month for grid view
+                    const allDays = Array.from({ length: daysInMonth }, (_, i) => {
+                        const day = i + 1;
+                        return {
+                            day,
+                            str: formatLocalDate(year, month, day),
+                            dayOfWeek: new Date(year, month, day).getDay(),
+                        };
+                    });
+
                     return (
-                        <Card padding="none">
-                            {/* Day headers */}
-                            <div className="grid grid-cols-7 border-b border-slate-200">
-                                {dayNames.map((day, i) => (
-                                    <div key={day} className={clsx(
-                                        'py-3 text-center text-sm font-bold',
-                                        i === 5 ? 'text-emerald-600 bg-emerald-50/50' : 'text-slate-600 bg-slate-50'
-                                    )}>
-                                        {day}
+                        <>
+                            {/* Mode toggle */}
+                            <div className="flex justify-end -mt-2 mb-2">
+                                <button
+                                    onClick={() => setMonthlyMode(monthlyMode === 'calendar' ? 'grid' : 'calendar')}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
+                                >
+                                    {monthlyMode === 'calendar' ? (
+                                        <><Table2 className="h-3.5 w-3.5" /> عرض جدولي</>
+                                    ) : (
+                                        <><LayoutGrid className="h-3.5 w-3.5" /> عرض تقويمي</>
+                                    )}
+                                </button>
+                            </div>
+
+                            {monthlyMode === 'calendar' ? (
+                                <Card padding="none">
+                                    {/* Day headers */}
+                                    <div className="grid grid-cols-7 border-b border-slate-200">
+                                        {dayNames.map((day, i) => (
+                                            <div key={day} className={clsx(
+                                                'py-3 text-center text-sm font-bold',
+                                                i === 5 ? 'text-emerald-600 bg-emerald-50/50' : 'text-slate-600 bg-slate-50'
+                                            )}>
+                                                {day}
+                                            </div>
+                                        ))}
                                     </div>
-                                ))}
-                            </div>
 
-                            {/* Calendar grid */}
-                            <div className="grid grid-cols-7">
-                                {/* Empty cells before first day */}
-                                {Array.from({ length: firstDay }).map((_, i) => (
-                                    <div key={`empty-${i}`} className="min-h-[140px] bg-slate-50/30 border-b border-r border-slate-100"></div>
-                                ))}
+                                    {/* Calendar grid */}
+                                    <div className="grid grid-cols-7">
+                                        {Array.from({ length: firstDay }).map((_, i) => (
+                                            <div key={`empty-${i}`} className="min-h-[140px] bg-slate-50/30 border-b border-r border-slate-100"></div>
+                                        ))}
 
-                                {/* Day cells */}
-                                {Array.from({ length: daysInMonth }).map((_, idx) => {
-                                    const day = idx + 1;
-                                    const dayStr = formatLocalDate(year, month, day);
-                                    const isToday = dayStr === todayStr;
-                                    const daySessions = sessions.filter(s => s.date === dayStr);
-                                    const isFriday = (firstDay + idx) % 7 === 5;
-                                    const holiday = holidayMap.get(dayStr);
+                                        {Array.from({ length: daysInMonth }).map((_, idx) => {
+                                            const day = idx + 1;
+                                            const dayStr = formatLocalDate(year, month, day);
+                                            const isToday = dayStr === todayStr;
+                                            const daySessions = sessions.filter(s => s.date === dayStr);
+                                            const isFriday = (firstDay + idx) % 7 === 5;
+                                            const holiday = holidayMap.get(dayStr);
 
-                                    // Group sessions by hall for display
-                                    const uniquePrograms = new Map<number, { name: string; gender: string; count: number }>();
-                                    daySessions.forEach(s => {
-                                        const progId = s.program_group.package.program.id;
-                                        if (!uniquePrograms.has(progId)) {
-                                            uniquePrograms.set(progId, {
-                                                name: s.program_group.package.program.name,
-                                                gender: s.program_group.gender,
-                                                count: 1,
-                                            });
-                                        } else {
-                                            uniquePrograms.get(progId)!.count++;
-                                        }
-                                    });
-
-                                    return (
-                                        <div
-                                            key={day}
-                                            className={clsx(
-                                                'min-h-[140px] border-b border-r border-slate-100 transition-all relative group',
-                                                isToday && 'bg-teal-50/40 ring-2 ring-inset ring-teal-400',
-                                                holiday && 'bg-red-50/60',
-                                                isFriday && !holiday && 'bg-emerald-50/20',
-                                                dragSessionId && !holiday && 'hover:bg-blue-50',
-                                            )}
-                                            onDragOver={handleDragOver}
-                                            onDrop={(e) => handleDrop(e, dayStr)}
-                                        >
-                                            {/* Day number + add button */}
-                                            <div className="flex items-center justify-between p-2">
-                                                <span className={clsx(
-                                                    'inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold',
-                                                    isToday
-                                                        ? 'bg-teal-500 text-white shadow-sm'
-                                                        : 'text-slate-700 hover:bg-slate-100'
-                                                )}>
-                                                    {day}
-                                                </span>
-                                                {!holiday && (
-                                                    <button
-                                                        onClick={() => openAssignModal(dayStr)}
-                                                        className="opacity-0 group-hover:opacity-100 p-1 rounded-lg hover:bg-teal-100 text-teal-600 transition-all"
-                                                        title="إضافة جلسات"
-                                                    >
-                                                        <Plus className="h-4 w-4" />
-                                                    </button>
-                                                )}
-                                            </div>
-                                            {holiday && (
+                                            return (
                                                 <div
-                                                    className="mx-1.5 mb-1 px-2 py-1 rounded-md text-[10px] font-bold text-white text-center truncate"
-                                                    style={{ backgroundColor: holiday.color || '#ef4444' }}
-                                                    title={holiday.name}
+                                                    key={day}
+                                                    className={clsx(
+                                                        'min-h-[140px] border-b border-r border-slate-100 transition-all relative group',
+                                                        isToday && 'bg-teal-50/40 ring-2 ring-inset ring-teal-400',
+                                                        holiday && 'bg-red-50/60',
+                                                        isFriday && !holiday && 'bg-emerald-50/20',
+                                                        dragSessionId && !holiday && 'hover:bg-blue-50',
+                                                    )}
+                                                    onDragOver={handleDragOver}
+                                                    onDrop={(e) => handleDrop(e, dayStr)}
                                                 >
-                                                    {holiday.name}
-                                                </div>
-                                            )}
-
-                                            {/* Sessions */}
-                                            <div className="px-1.5 pb-1.5 space-y-1">
-                                                {daySessions.slice(0, 3).map((session) => (
-                                                    <div
-                                                        key={session.id}
-                                                        draggable
-                                                        onDragStart={(e) => handleDragStart(e, session.id)}
-                                                        onClick={() => setSelectedSession(session)}
-                                                        className={clsx(
-                                                            'px-2 py-1.5 rounded-lg text-[11px] cursor-grab active:cursor-grabbing border transition-all',
-                                                            genderSessionColors[session.program_group.gender],
-                                                            dragSessionId === session.id && 'opacity-50'
+                                                    <div className="flex items-center justify-between p-2">
+                                                        <span className={clsx(
+                                                            'inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold',
+                                                            isToday ? 'bg-teal-500 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100'
+                                                        )}>
+                                                            {day}
+                                                        </span>
+                                                        {!holiday && (
+                                                            <button
+                                                                onClick={() => openAssignModal(dayStr)}
+                                                                className="opacity-0 group-hover:opacity-100 p-1 rounded-lg hover:bg-teal-100 text-teal-600 transition-all"
+                                                                title="إضافة جلسات"
+                                                            >
+                                                                <Plus className="h-4 w-4" />
+                                                            </button>
                                                         )}
-                                                    >
-                                                        <div className="flex items-center gap-1 mb-0.5">
-                                                            <GripVertical className="h-3 w-3 text-slate-400 flex-shrink-0" />
-                                                            <span className="font-bold text-slate-800 truncate">{session.program_group.package.program.name}</span>
-                                                        </div>
-                                                        <div className="text-[10px] text-slate-500 truncate pr-4">
-                                                            {session.program_group.name}
-                                                            {session.training_hall && (
-                                                                <span> · {session.training_hall.name}</span>
-                                                            )}
-                                                        </div>
                                                     </div>
-                                                ))}
-                                                {daySessions.length > 3 && (
-                                                    <button
-                                                        onClick={() => {
-                                                            setSelectedDate(dayStr);
-                                                            changeView('daily');
-                                                        }}
-                                                        className="w-full text-center text-[10px] text-teal-600 font-bold hover:text-teal-700 py-0.5"
-                                                    >
-                                                        +{daySessions.length - 3} المزيد
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </Card>
+                                                    {holiday && (
+                                                        <div
+                                                            className="mx-1.5 mb-1 px-2 py-1 rounded-md text-[10px] font-bold text-white text-center truncate"
+                                                            style={{ backgroundColor: holiday.color || '#ef4444' }}
+                                                            title={holiday.name}
+                                                        >
+                                                            {holiday.name}
+                                                        </div>
+                                                    )}
+
+                                                    <div className="px-1.5 pb-1.5 space-y-1">
+                                                        {daySessions.slice(0, 3).map((session) => (
+                                                            <div
+                                                                key={session.id}
+                                                                draggable
+                                                                onDragStart={(e) => handleDragStart(e, session.id)}
+                                                                onClick={() => setSelectedSession(session)}
+                                                                className={clsx(
+                                                                    'px-2 py-1.5 rounded-lg text-[11px] cursor-grab active:cursor-grabbing border transition-all',
+                                                                    genderSessionColors[session.program_group.gender],
+                                                                    dragSessionId === session.id && 'opacity-50'
+                                                                )}
+                                                            >
+                                                                <div className="flex items-center gap-1 mb-0.5">
+                                                                    <GripVertical className="h-3 w-3 text-slate-400 flex-shrink-0" />
+                                                                    <span className="font-bold text-slate-800 truncate">{session.program_group.package.program.name}</span>
+                                                                </div>
+                                                                <div className="text-[10px] text-slate-500 truncate pr-4">
+                                                                    {session.program_group.name}
+                                                                    {session.training_hall && <span> · {session.training_hall.name}</span>}
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                        {daySessions.length > 3 && (
+                                                            <button
+                                                                onClick={() => { setSelectedDate(dayStr); changeView('daily'); }}
+                                                                className="w-full text-center text-[10px] text-teal-600 font-bold hover:text-teal-700 py-0.5"
+                                                            >
+                                                                +{daySessions.length - 3} المزيد
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </Card>
+                            ) : (
+                                /* ===== GRID VIEW: Days as rows, Halls as columns ===== */
+                                <Card padding="none">
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full" style={{ minWidth: `${160 + halls.length * 150}px` }}>
+                                            <thead>
+                                                <tr>
+                                                    <th className="p-3 text-right text-xs font-bold text-slate-500 uppercase tracking-wider bg-slate-50 sticky right-0 z-10 min-w-[160px] border-b border-l border-slate-200">
+                                                        اليوم
+                                                    </th>
+                                                    {halls.map((hall) => (
+                                                        <th key={hall.id} className="p-3 text-center min-w-[150px] border-b border-slate-200 bg-slate-50">
+                                                            <div className="flex flex-col items-center gap-0.5">
+                                                                <Building2 className="h-4 w-4 text-slate-400" />
+                                                                <span className="text-sm font-bold text-slate-600">{hall.name}</span>
+                                                                <span className="text-[10px] text-slate-400">{hall.capacity} متدرب</span>
+                                                            </div>
+                                                        </th>
+                                                    ))}
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {allDays.map(({ day, str: dayStr, dayOfWeek }) => {
+                                                    const isToday = dayStr === todayStr;
+                                                    const isFriday = dayOfWeek === 5;
+                                                    const holiday = holidayMap.get(dayStr);
+
+                                                    return (
+                                                        <tr
+                                                            key={day}
+                                                            className={clsx(
+                                                                'border-b border-slate-100 transition-colors',
+                                                                isToday && 'bg-teal-50/50',
+                                                                holiday && 'bg-red-50/40',
+                                                                isFriday && !holiday && 'bg-emerald-50/20',
+                                                            )}
+                                                        >
+                                                            <td className="p-3 bg-white sticky right-0 z-10 border-l border-slate-100">
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className={clsx(
+                                                                        'inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold',
+                                                                        isToday ? 'bg-teal-500 text-white' : 'text-slate-700'
+                                                                    )}>
+                                                                        {day}
+                                                                    </span>
+                                                                    <div>
+                                                                        <span className={clsx(
+                                                                            'text-sm font-semibold block',
+                                                                            isToday ? 'text-teal-700' : isFriday ? 'text-emerald-600' : 'text-slate-600'
+                                                                        )}>
+                                                                            {dayNamesShort[dayOfWeek]}
+                                                                        </span>
+                                                                        {holiday && (
+                                                                            <span
+                                                                                className="text-[10px] font-bold text-white px-1.5 py-0.5 rounded"
+                                                                                style={{ backgroundColor: holiday.color || '#ef4444' }}
+                                                                            >
+                                                                                {holiday.name}
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                            {halls.map((hall) => {
+                                                                const cellSessions = sessions.filter(
+                                                                    s => s.date === dayStr && s.training_hall.id === hall.id
+                                                                );
+                                                                return (
+                                                                    <td
+                                                                        key={hall.id}
+                                                                        className={clsx(
+                                                                            'p-1.5 align-top',
+                                                                            dragSessionId && !holiday && 'hover:bg-blue-50',
+                                                                        )}
+                                                                        onDragOver={!holiday ? handleDragOver : undefined}
+                                                                        onDrop={!holiday ? (e) => {
+                                                                            e.preventDefault();
+                                                                            const sessionId = parseInt(e.dataTransfer.getData('text/plain'));
+                                                                            if (!sessionId) return;
+                                                                            const session = sessions.find(s => s.id === sessionId);
+                                                                            if (session && (session.date !== dayStr || session.training_hall.id !== hall.id)) {
+                                                                                router.patch(route('schedule.sessions.move', sessionId), {
+                                                                                    date: dayStr,
+                                                                                    training_hall_id: hall.id,
+                                                                                }, { preserveState: false });
+                                                                            }
+                                                                            setDragSessionId(null);
+                                                                        } : undefined}
+                                                                    >
+                                                                        {cellSessions.length > 0 ? (
+                                                                            <div className="space-y-1">
+                                                                                {cellSessions.map((session) => (
+                                                                                    <div
+                                                                                        key={session.id}
+                                                                                        draggable
+                                                                                        onDragStart={(e) => handleDragStart(e, session.id)}
+                                                                                        onClick={() => setSelectedSession(session)}
+                                                                                        className={clsx(
+                                                                                            'px-2 py-1.5 rounded-lg text-[11px] cursor-grab active:cursor-grabbing border transition-all',
+                                                                                            genderSessionColors[session.program_group.gender],
+                                                                                            dragSessionId === session.id && 'opacity-50'
+                                                                                        )}
+                                                                                    >
+                                                                                        <div className="flex items-center gap-1">
+                                                                                            <GripVertical className="h-3 w-3 text-slate-400 flex-shrink-0" />
+                                                                                            <span className="font-bold text-slate-800 truncate">{session.program_group.package.program.name}</span>
+                                                                                        </div>
+                                                                                        <div className="text-[10px] text-slate-500 truncate pr-4 mt-0.5">
+                                                                                            {session.program_group.name}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                ))}
+                                                                            </div>
+                                                                        ) : null}
+                                                                    </td>
+                                                                );
+                                                            })}
+                                                        </tr>
+                                                    );
+                                                })}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </Card>
+                            )}
+                        </>
                     );
                 })()}
             </div>

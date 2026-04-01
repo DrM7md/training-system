@@ -218,9 +218,15 @@ class ScheduleController extends Controller
     {
         $validated = $request->validate([
             'date' => 'required|date',
+            'training_hall_id' => 'nullable|exists:training_halls,id',
         ]);
 
-        $session->update(['date' => $validated['date']]);
+        $data = ['date' => $validated['date']];
+        if (!empty($validated['training_hall_id'])) {
+            $data['training_hall_id'] = $validated['training_hall_id'];
+        }
+
+        $session->update($data);
 
         return back()->with('success', 'تم نقل الجلسة بنجاح');
     }
