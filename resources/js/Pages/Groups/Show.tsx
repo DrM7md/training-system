@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Components/Layout/AuthenticatedLayout';
 import { Head, router, useForm } from '@inertiajs/react';
 import { useState } from 'react';
-import { Users, Calendar, Building2, GraduationCap, Plus, Trash2, RefreshCw, Edit2, Check, Clock, Package, ChevronDown, ChevronUp } from 'lucide-react';
+import { Users, Calendar, Building2, GraduationCap, Plus, Trash2, RefreshCw, Check, X, Clock, Package, ChevronDown, ChevronUp } from 'lucide-react';
 import Card, { CardHeader } from '@/Components/UI/Card';
 import Button from '@/Components/UI/Button';
 import Badge from '@/Components/UI/Badge';
@@ -87,7 +87,7 @@ export default function Show({ group, employees }: Props) {
     const [sessionDates, setSessionDates] = useState<string[]>(
         Array(group.package.days).fill('')
     );
-    const [editingSession, setEditingSession] = useState<Session | null>(null);
+    const [editingSessionId, setEditingSessionId] = useState<number | null>(null);
     const [editSessionDate, setEditSessionDate] = useState('');
     const [genMode, setGenMode] = useState<'weekly' | 'manual'>('weekly');
     const [weeklyStartDate, setWeeklyStartDate] = useState('');
@@ -152,21 +152,25 @@ export default function Show({ group, employees }: Props) {
         }
     };
 
-    const handleUpdateSession = () => {
-        if (!editingSession || !editSessionDate) return;
-
-        router.put(route('sessions.update', editingSession.id), { date: editSessionDate }, {
+    const handleUpdateSession = (sessionId: number) => {
+        if (!editSessionDate) return;
+        router.put(route('sessions.update', sessionId), { date: editSessionDate }, {
             preserveScroll: true,
             onSuccess: () => {
-                setEditingSession(null);
+                setEditingSessionId(null);
                 setEditSessionDate('');
             }
         });
     };
 
-    const openEditSession = (session: Session) => {
-        setEditingSession(session);
+    const startEditSession = (session: Session) => {
+        setEditingSessionId(session.id);
         setEditSessionDate(session.date);
+    };
+
+    const cancelEditSession = () => {
+        setEditingSessionId(null);
+        setEditSessionDate('');
     };
 
     const updateSessionDate = (index: number, date: string) => {
@@ -379,28 +383,58 @@ export default function Show({ group, employees }: Props) {
                                 {group.training_sessions.map((session) => (
                                     <div
                                         key={session.id}
-                                        className={`group relative p-4 border rounded-xl text-center hover:shadow-sm transition-all ${
+                                        className={`p-4 border rounded-xl text-center transition-all ${
+                                            editingSessionId === session.id ? 'border-teal-400 bg-teal-50/30 shadow-sm' :
                                             session.status === 'completed' ? 'border-emerald-200 bg-emerald-50/30' :
                                             session.status === 'cancelled' ? 'border-red-200 bg-red-50/30' :
                                             'border-slate-200 hover:border-teal-300'
                                         }`}
                                     >
-                                        <button
-                                            onClick={() => openEditSession(session)}
-                                            className="absolute top-2 left-2 p-1.5 rounded-lg bg-white border border-slate-200 opacity-0 group-hover:opacity-100 hover:bg-teal-50 hover:border-teal-300 transition-all"
-                                        >
-                                            <Edit2 className="h-3.5 w-3.5 text-teal-600" />
-                                        </button>
                                         <div className="text-xs text-slate-500 font-medium">اليوم {session.day_number}</div>
-                                        <div className="text-sm font-semibold mt-1 text-slate-700">{formatDate(session.date)}</div>
-                                        <div className="mt-1.5">
-                                            <Badge
-                                                variant={statusLabels[session.status]?.variant || 'default'}
-                                                size="sm"
-                                            >
-                                                {statusLabels[session.status]?.label || session.status}
-                                            </Badge>
-                                        </div>
+
+                                        {editingSessionId === session.id ? (
+                                            <div className="mt-1.5 space-y-2">
+                                                <input
+                                                    type="date"
+                                                    value={editSessionDate}
+                                                    onChange={(e) => setEditSessionDate(e.target.value)}
+                                                    className="w-full text-sm border border-teal-300 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 text-center"
+                                                    autoFocus
+                                                />
+                                                <div className="flex items-center justify-center gap-1">
+                                                    <button
+                                                        onClick={() => handleUpdateSession(session.id)}
+                                                        disabled={!editSessionDate || editSessionDate === session.date}
+                                                        className="p-1.5 rounded-lg bg-teal-500 text-white hover:bg-teal-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                                    >
+                                                        <Check className="h-3.5 w-3.5" />
+                                                    </button>
+                                                    <button
+                                                        onClick={cancelEditSession}
+                                                        className="p-1.5 rounded-lg bg-slate-200 text-slate-600 hover:bg-slate-300 transition-colors"
+                                                    >
+                                                        <X className="h-3.5 w-3.5" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <button
+                                                    onClick={() => startEditSession(session)}
+                                                    className="text-sm font-semibold mt-1 text-slate-700 hover:text-teal-600 transition-colors cursor-pointer"
+                                                >
+                                                    {formatDate(session.date)}
+                                                </button>
+                                                <div className="mt-1.5">
+                                                    <Badge
+                                                        variant={statusLabels[session.status]?.variant || 'default'}
+                                                        size="sm"
+                                                    >
+                                                        {statusLabels[session.status]?.label || session.status}
+                                                    </Badge>
+                                                </div>
+                                            </>
+                                        )}
                                     </div>
                                 ))}
                             </div>
@@ -506,7 +540,6 @@ export default function Show({ group, employees }: Props) {
                         onChange={setSelectedEmployee}
                         options={employeeOptions}
                         placeholder="اختر موظف..."
-                        searchPlaceholder="بحث بالاسم أو المدرسة..."
                     />
                     {selectedEmployee && (
                         <div className="mt-4 p-3 bg-teal-50 border border-teal-200 rounded-xl">
@@ -624,30 +657,6 @@ export default function Show({ group, employees }: Props) {
                 </ModalFooter>
             </Modal>
 
-            {/* Edit Session Modal */}
-            <Modal
-                open={!!editingSession}
-                onClose={() => {
-                    setEditingSession(null);
-                    setEditSessionDate('');
-                }}
-                title={`تعديل تاريخ اليوم ${editingSession?.day_number || ''}`}
-            >
-                <Input
-                    label="التاريخ الجديد"
-                    type="date"
-                    value={editSessionDate}
-                    onChange={(e) => setEditSessionDate(e.target.value)}
-                />
-                <ModalFooter>
-                    <Button variant="secondary" onClick={() => setEditingSession(null)}>
-                        إلغاء
-                    </Button>
-                    <Button onClick={handleUpdateSession} icon={<Check className="h-4 w-4" />}>
-                        حفظ
-                    </Button>
-                </ModalFooter>
-            </Modal>
         </AuthenticatedLayout>
     );
 }

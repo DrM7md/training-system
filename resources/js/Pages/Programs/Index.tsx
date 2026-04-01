@@ -528,7 +528,6 @@ export default function Index({ programs, academicYears, supervisors, currentYea
                             onChange={(val) => form.setData('supervisor_id', val)}
                             options={supervisorOptions}
                             placeholder="اختر المشرف (اختياري)"
-                            searchPlaceholder="بحث في المشرفين..."
                             error={form.errors.supervisor_id}
                         />
                     </>

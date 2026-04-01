@@ -264,7 +264,6 @@ export default function Index({ packages, programs, supervisors, halls, filters,
                             onChange={(val) => handleProgramChange(String(val))}
                             options={programOptions}
                             placeholder="كل البرامج"
-                            searchPlaceholder="بحث في البرامج..."
                         />
                         {programFilter && (
                             <button
@@ -489,7 +488,6 @@ export default function Index({ packages, programs, supervisors, halls, filters,
                                     onChange={(val) => form.setData('program_id', val)}
                                     options={programOptions}
                                     placeholder="اختر البرنامج"
-                                    searchPlaceholder="بحث في البرامج..."
                                     error={form.errors.program_id}
                                     required
                                 />
@@ -566,7 +564,6 @@ export default function Index({ packages, programs, supervisors, halls, filters,
                                 onChange={(val) => form.setData('supervisor_id', val)}
                                 options={supervisorOptions}
                                 placeholder="اختر المشرف (اختياري)"
-                                searchPlaceholder="بحث في المشرفين..."
                                 error={form.errors.supervisor_id}
                             />
 

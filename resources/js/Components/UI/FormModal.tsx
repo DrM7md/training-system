@@ -1,24 +1,24 @@
-import { useForm } from '@inertiajs/react';
-import { FormEvent, ReactNode, useEffect } from 'react';
+import { useForm, InertiaFormProps } from '@inertiajs/react';
+import { FormEvent, ReactNode, useEffect, useRef } from 'react';
 import Modal, { ModalFooter } from './Modal';
 import Button from './Button';
 
-interface FormModalProps {
+// ─── Generic Type — عشان الـ form يكون typed ───
+interface FormModalProps<T extends Record<string, unknown>> {
     open: boolean;
     onClose: () => void;
     title: string;
     description?: string;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    initialData: any;
+    initialData: T;
     action: string;
     method?: 'post' | 'put' | 'patch';
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    children: (form: any) => ReactNode;
+    children: (form: InertiaFormProps<T>) => ReactNode;
     size?: 'sm' | 'md' | 'lg' | 'xl';
     submitLabel?: string;
+    onSuccess?: () => void;
 }
 
-export default function FormModal({
+export default function FormModal<T extends Record<string, unknown>>({
     open,
     onClose,
     title,
@@ -29,36 +29,46 @@ export default function FormModal({
     children,
     size = 'md',
     submitLabel = 'حفظ',
-}: FormModalProps) {
-    const form = useForm(initialData);
+    onSuccess,
+}: FormModalProps<T>) {
+    const form = useForm(initialData as any);
+
+    // ─── نحفظ آخر initialData عشان نقارن بثبات ───
+    const prevDataRef = useRef<string>('');
 
     useEffect(() => {
-        if (open) {
-            form.setData(initialData);
-        }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [open, JSON.stringify(initialData)]);
+        if (!open) return;
 
+        const dataStr = JSON.stringify(initialData);
+
+        // نحدّث بس لو البيانات فعلاً تغيرت
+        if (dataStr !== prevDataRef.current) {
+            form.setData(initialData);
+            prevDataRef.current = dataStr;
+        }
+
+        // دايماً ننظف الـ errors لما يفتح
+        form.clearErrors();
+    }, [open, initialData]);
+
+    // ─── Submit ───
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
-        
+
         const options = {
             preserveScroll: true,
             onSuccess: () => {
                 form.reset();
+                form.clearErrors();
                 onClose();
+                onSuccess?.();
             },
         };
 
-        if (method === 'post') {
-            form.post(action, options);
-        } else if (method === 'put') {
-            form.put(action, options);
-        } else {
-            form.patch(action, options);
-        }
+        form[method](action, options);
     };
 
+    // ─── إغلاق ───
     const handleClose = () => {
         form.reset();
         form.clearErrors();

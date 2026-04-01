@@ -393,7 +393,6 @@ export default function Index({ assignments, trainers, programs, assignmentTypes
                                     }}
                                     options={programs.map(p => ({ value: p.id, label: p.name }))}
                                     placeholder="-- اختر البرنامج --"
-                                    searchPlaceholder="ابحث عن برنامج..."
                                     required
                                 />
                             </div>

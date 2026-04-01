@@ -343,7 +343,6 @@ export default function Index({ employees, schools, filters, employee }: Props) 
                             onChange={(val) => form.setData('school_id', val || '')}
                             options={schools.map((s) => ({ value: s.id, label: s.name }))}
                             placeholder="اختر المدرسة..."
-                            searchPlaceholder="بحث في المدارس..."
                             error={form.errors.school_id}
                         />
                         <div className="grid grid-cols-2 gap-4">

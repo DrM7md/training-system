@@ -365,10 +365,10 @@ export default function Index({ bookings, users, halls }: Props) {
             >
                 {(form) => (
                     <>
-                        {form.errors.conflict && (
+                        {(form.errors as any).conflict && (
                             <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm font-medium">
                                 <X className="h-4 w-4 shrink-0" />
-                                {form.errors.conflict}
+                                {(form.errors as any).conflict}
                             </div>
                         )}
 
@@ -389,7 +389,6 @@ export default function Index({ bookings, users, halls }: Props) {
                             onChange={(v) => form.setData('booked_by', String(v))}
                             options={users.map(u => ({ value: u.id, label: u.name }))}
                             placeholder="اختر المستخدم"
-                            searchPlaceholder="ابحث عن مستخدم..."
                             error={form.errors.booked_by}
                         />
 

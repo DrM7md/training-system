@@ -218,7 +218,6 @@ export default function Index({ groups, packages, trainers, halls, bookedHallIds
                             onChange={(val) => handlePackageChange(String(val))}
                             options={packageOptions}
                             placeholder="كل الحقائب"
-                            searchPlaceholder="بحث في الحقائب..."
                         />
                         {packageFilter && (
                             <button
@@ -392,7 +391,6 @@ export default function Index({ groups, packages, trainers, halls, bookedHallIds
                                 onChange={(val) => form.setData('package_id', val)}
                                 options={packageOptions}
                                 placeholder="اختر الحقيبة"
-                                searchPlaceholder="بحث في الحقائب..."
                                 error={form.errors.package_id}
                                 required
                             />
@@ -434,7 +432,6 @@ export default function Index({ groups, packages, trainers, halls, bookedHallIds
                                 onChange={(val) => form.setData('trainer_id', val)}
                                 options={trainerOptions}
                                 placeholder="اختر المدرب..."
-                                searchPlaceholder="بحث في المدربين..."
                                 error={form.errors.trainer_id}
                             />
                             <SearchableSelect
@@ -443,7 +440,6 @@ export default function Index({ groups, packages, trainers, halls, bookedHallIds
                                 onChange={(val) => form.setData('training_hall_id', val)}
                                 options={getFilteredHallOptions(form.data.gender || selectedGender)}
                                 placeholder="اختر القاعة..."
-                                searchPlaceholder="بحث في القاعات..."
                                 error={form.errors.training_hall_id}
                             />
                         </div>

@@ -448,7 +448,6 @@ export default function Show({ program, supervisors, halls, hoursPerDay, usedHou
                             onChange={(val) => form.setData('supervisor_id', val)}
                             options={supervisorOptions}
                             placeholder="اختر المشرف (اختياري)"
-                            searchPlaceholder="بحث في المشرفين..."
                             error={form.errors.supervisor_id}
                         />
 
