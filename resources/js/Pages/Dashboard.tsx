@@ -283,13 +283,19 @@ export default function Dashboard({
                                             <div className="flex items-center gap-2.5">
                                                 <div
                                                     className={clsx(
-                                                        'w-2 h-2 rounded-full',
-                                                        hall.is_busy ? 'bg-rose-500' : 'bg-emerald-500'
+                                                        'w-2.5 h-2.5 rounded-full shrink-0',
+                                                        hall.is_busy ? 'bg-rose-400' : 'bg-emerald-500'
                                                     )}
                                                 />
-                                                <span className="text-sm font-semibold text-slate-700">{hall.name}</span>
+                                                <span className={clsx(
+                                                    'text-sm font-semibold',
+                                                    hall.is_busy ? 'text-slate-400 line-through decoration-rose-300' : 'text-slate-700'
+                                                )}>{hall.name}</span>
                                             </div>
-                                            <span className="text-xs text-slate-500 font-medium">{hall.capacity} متدرب</span>
+                                            <span className={clsx(
+                                                'text-xs font-medium',
+                                                hall.is_busy ? 'text-rose-400' : 'text-slate-500'
+                                            )}>{hall.capacity} متدرب</span>
                                         </div>
                                     ))
                                 )}
