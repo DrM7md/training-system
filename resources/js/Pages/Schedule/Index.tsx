@@ -165,6 +165,15 @@ function setViewCookie(view: string) {
     document.cookie = `schedule_view=${view};path=/;max-age=${60 * 60 * 24 * 365};SameSite=Lax`;
 }
 
+function setMonthlyModeCookie(mode: string) {
+    document.cookie = `schedule_monthly_mode=${mode};path=/;max-age=${60 * 60 * 24 * 365};SameSite=Lax`;
+}
+
+function getMonthlyModeCookie(): 'calendar' | 'grid' {
+    const match = document.cookie.match(/schedule_monthly_mode=(calendar|grid)/);
+    return (match?.[1] as 'calendar' | 'grid') || 'calendar';
+}
+
 function HallSelect({ halls, sessions, currentSession, value, onChange, genderPriorityLabels }: {
     halls: Hall[];
     sessions: Session[];
@@ -207,7 +216,7 @@ export default function Index({ sessions, halls, trainers, currentDate, viewType
     const [selectedDate, setSelectedDate] = useState(currentDate || getTodayStr());
     const [selectedSession, setSelectedSession] = useState<Session | null>(null);
     const [dailyTab, setDailyTab] = useState<'busy' | 'available'>('busy');
-    const [monthlyMode, setMonthlyMode] = useState<'calendar' | 'grid'>('calendar');
+    const [monthlyMode, setMonthlyMode] = useState<'calendar' | 'grid'>(getMonthlyModeCookie());
 
     // Monthly assign modal
     const [assignDate, setAssignDate] = useState<string | null>(null);
@@ -815,7 +824,7 @@ export default function Index({ sessions, halls, trainers, currentDate, viewType
                             {/* Mode toggle */}
                             <div className="flex justify-end -mt-2 mb-2">
                                 <button
-                                    onClick={() => setMonthlyMode(monthlyMode === 'calendar' ? 'grid' : 'calendar')}
+                                    onClick={() => { const next = monthlyMode === 'calendar' ? 'grid' : 'calendar'; setMonthlyMode(next); setMonthlyModeCookie(next); }}
                                     className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
                                 >
                                     {monthlyMode === 'calendar' ? (
