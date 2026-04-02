@@ -211,6 +211,7 @@ export default function Index({ sessions, halls, trainers, currentDate, viewType
 
     // Monthly assign modal
     const [assignDate, setAssignDate] = useState<string | null>(null);
+    const [assignHallId, setAssignHallId] = useState<number | null>(null);
     const [selectedProgramId, setSelectedProgramId] = useState<number | null>(null);
     const [selectedPackageId, setSelectedPackageId] = useState<number | null>(null);
     const [selectedGroupIds, setSelectedGroupIds] = useState<number[]>([]);
@@ -346,8 +347,9 @@ export default function Index({ sessions, halls, trainers, currentDate, viewType
         setSelectedGroupIds([]);
     };
 
-    const openAssignModal = (dateStr: string) => {
+    const openAssignModal = (dateStr: string, hallId?: number) => {
         setAssignDate(dateStr);
+        setAssignHallId(hallId || null);
         setSelectedProgramId(null);
         setSelectedPackageId(null);
         setSelectedGroupIds([]);
@@ -355,15 +357,19 @@ export default function Index({ sessions, halls, trainers, currentDate, viewType
 
     const handleAssignSubmit = () => {
         if (!assignDate || selectedGroupIds.length === 0) return;
-        assignForm.setData({ date: assignDate, group_ids: selectedGroupIds });
-        router.post(route('schedule.sessions.store'), {
+        const data: Record<string, any> = {
             date: assignDate,
             group_ids: selectedGroupIds,
-        }, {
+        };
+        if (assignHallId) {
+            data.training_hall_id = assignHallId;
+        }
+        router.post(route('schedule.sessions.store'), data, {
             preserveState: true,
             preserveScroll: true,
             onSuccess: () => {
                 setAssignDate(null);
+                setAssignHallId(null);
             },
         });
     };
@@ -1031,7 +1037,7 @@ export default function Index({ sessions, halls, trainers, currentDate, viewType
                                                                             </div>
                                                                         ) : !holiday ? (
                                                                             <button
-                                                                                onClick={() => openAssignModal(dayStr)}
+                                                                                onClick={() => openAssignModal(dayStr, hall.id)}
                                                                                 className="w-full h-full min-h-[40px] flex items-center justify-center opacity-0 group-hover/cell:opacity-100 transition-opacity"
                                                                             >
                                                                                 <Plus className="h-4 w-4 text-slate-300 hover:text-teal-500 transition-colors" />
@@ -1303,7 +1309,9 @@ export default function Index({ sessions, halls, trainers, currentDate, viewType
                 onClose={() => setAssignDate(null)}
                 title={`إضافة جلسات - ${assignDate ? (() => {
                     const d = new Date(assignDate);
-                    return `${d.getDate()} ${monthNames[d.getMonth()]} ${d.getFullYear()}`;
+                    const dateLabel = `${d.getDate()} ${monthNames[d.getMonth()]} ${d.getFullYear()}`;
+                    const hallLabel = assignHallId ? halls.find(h => h.id === assignHallId)?.name : null;
+                    return hallLabel ? `${dateLabel} - ${hallLabel}` : dateLabel;
                 })() : ''}`}
                 size="lg"
             >

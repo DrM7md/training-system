@@ -165,9 +165,11 @@ class ScheduleController extends Controller
             'date' => 'required|date',
             'group_ids' => 'required|array|min:1',
             'group_ids.*' => 'exists:program_groups,id',
+            'training_hall_id' => 'nullable|exists:training_halls,id',
         ]);
 
         $date = $validated['date'];
+        $overrideHallId = $validated['training_hall_id'] ?? null;
         $created = 0;
         $conflicts = 0;
 
@@ -181,11 +183,12 @@ class ScheduleController extends Controller
 
             if (!$exists && $group) {
                 $dayNumber = TrainingSession::where('program_group_id', $groupId)->count() + 1;
+                $hallId = $overrideHallId ?? $group->training_hall_id;
 
                 // Check for hall conflict
                 $hallConflict = false;
-                if ($group->training_hall_id) {
-                    $hallConflict = TrainingSession::where('training_hall_id', $group->training_hall_id)
+                if ($hallId) {
+                    $hallConflict = TrainingSession::where('training_hall_id', $hallId)
                         ->where('program_group_id', '!=', $groupId)
                         ->whereDate('date', $date)
                         ->where('status', '!=', 'cancelled')
@@ -194,7 +197,7 @@ class ScheduleController extends Controller
 
                 TrainingSession::create([
                     'program_group_id' => $groupId,
-                    'training_hall_id' => $group->training_hall_id,
+                    'training_hall_id' => $hallId,
                     'trainer_id' => $group->trainer_id,
                     'date' => $date,
                     'day_number' => $dayNumber,
