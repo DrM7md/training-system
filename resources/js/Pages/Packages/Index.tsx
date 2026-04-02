@@ -111,7 +111,7 @@ export default function Index({ packages, programs, supervisors, halls, filters,
     const [search, setSearch] = useState(filters.search || '');
     const [programFilter, setProgramFilter] = useState(filters.program_id || '');
     const [generatingFor, setGeneratingFor] = useState<PackageItem | null>(null);
-    const generateForm = useForm({ male_count: 0, female_count: 0 });
+    const generateForm = useForm({ male_count: 0, female_count: 0, mixed_count: 0 });
     const [generatingSessionsFor, setGeneratingSessionsFor] = useState<PackageItem | null>(null);
     const [sessionsStartDate, setSessionsStartDate] = useState('');
 
@@ -779,7 +779,16 @@ export default function Index({ packages, programs, supervisors, halls, filters,
                             />
                         </div>
 
-                        {(generateForm.data.male_count > 0 || generateForm.data.female_count > 0) && (
+                        <Input
+                            label="عدد المختلط (ذكور وإناث)"
+                            type="number"
+                            min={0}
+                            value={generateForm.data.mixed_count}
+                            onChange={(e) => generateForm.setData('mixed_count', Number.parseInt(e.target.value) || 0)}
+                            error={(generateForm.errors as any).mixed_count}
+                        />
+
+                        {(generateForm.data.male_count > 0 || generateForm.data.female_count > 0 || generateForm.data.mixed_count > 0) && (
                             <div className="p-3 bg-slate-50 rounded-xl text-sm text-slate-600 space-y-1">
                                 <p className="font-semibold text-slate-700">المجموعات المتوقعة:</p>
                                 {generateForm.data.male_count > 0 && (
@@ -787,6 +796,9 @@ export default function Index({ packages, programs, supervisors, halls, filters,
                                 )}
                                 {generateForm.data.female_count > 0 && (
                                     <p>إناث: {generateForm.data.female_count} متدربة ≈ {Math.ceil(generateForm.data.female_count / 25)} مجموعة</p>
+                                )}
+                                {generateForm.data.mixed_count > 0 && (
+                                    <p>مختلط: {generateForm.data.mixed_count} متدرب/ة ≈ {Math.ceil(generateForm.data.mixed_count / 25)} مجموعة</p>
                                 )}
                             </div>
                         )}

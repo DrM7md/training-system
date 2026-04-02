@@ -81,18 +81,21 @@ class PackageController extends Controller
         $validated = $request->validate([
             'male_count' => 'required|integer|min:0',
             'female_count' => 'required|integer|min:0',
+            'mixed_count' => 'nullable|integer|min:0',
         ]);
 
-        if ($validated['male_count'] == 0 && $validated['female_count'] == 0) {
-            return back()->with('error', 'يجب تحديد عدد الذكور أو الإناث');
+        $mixedCount = (int) ($validated['mixed_count'] ?? 0);
+
+        if ($validated['male_count'] == 0 && $validated['female_count'] == 0 && $mixedCount == 0) {
+            return back()->with('error', 'يجب تحديد عدد المتدربين');
         }
 
-        $result = $this->createAutoGroups($package, $validated['male_count'], $validated['female_count']);
+        $result = $this->createAutoGroups($package, $validated['male_count'], $validated['female_count'], $mixedCount);
 
         return back()->with('success', "تم إنشاء {$result['groups_created']} مجموعة بنجاح على {$result['halls_used']} قاعة");
     }
 
-    protected function createAutoGroups(Package $package, int $maleCount, int $femaleCount): array
+    protected function createAutoGroups(Package $package, int $maleCount, int $femaleCount, int $mixedCount = 0): array
     {
         // Get halls with active reservations excluded
         $reservedHallIds = HallReservation::pluck('training_hall_id')->unique()->toArray();
@@ -119,12 +122,16 @@ class PackageController extends Controller
         if ($femaleCount > 0) {
             $genderBatches[] = ['gender' => 'female', 'count' => $femaleCount];
         }
+        if ($mixedCount > 0) {
+            $genderBatches[] = ['gender' => 'mixed', 'count' => $mixedCount];
+        }
 
         foreach ($genderBatches as $batch) {
             // Filter halls by gender priority
             $genderHalls = $halls->filter(function ($hall) use ($batch) {
-                if (!$hall->gender_priority) return true; // no priority = available for all
+                if (!$hall->gender_priority) return true;
                 if ($hall->gender_priority === 'all') return true;
+                if ($batch['gender'] === 'mixed') return $hall->gender_priority === 'all' || !$hall->gender_priority;
                 return $hall->gender_priority === $batch['gender'];
             });
 
