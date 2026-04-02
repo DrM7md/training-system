@@ -315,4 +315,11 @@ class ProgramGroupController extends Controller
 
         return back()->with('success', 'تم تحديث الجلسة بنجاح');
     }
+
+    public function deleteSession(TrainingSession $session)
+    {
+        $session->delete();
+
+        return back()->with('success', 'تم حذف الجلسة بنجاح');
+    }
 }

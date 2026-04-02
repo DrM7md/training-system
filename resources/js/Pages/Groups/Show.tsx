@@ -175,6 +175,11 @@ export default function Show({ group, employees }: Props) {
         setEditSessionDate('');
     };
 
+    const handleDeleteSession = (sessionId: number) => {
+        if (!confirm('هل أنت متأكد من حذف هذه الجلسة؟')) return;
+        router.delete(route('sessions.destroy', sessionId), { preserveScroll: true });
+    };
+
     const handleAddSessions = () => {
         router.post(route('groups.add-sessions', group.id), { count: addSessionCount }, {
             preserveScroll: true,
@@ -407,13 +412,20 @@ export default function Show({ group, employees }: Props) {
                                 {group.training_sessions.map((session) => (
                                     <div
                                         key={session.id}
-                                        className={`p-4 border rounded-xl text-center transition-all ${
+                                        className={`group relative p-4 border rounded-xl text-center transition-all ${
                                             editingSessionId === session.id ? 'border-teal-400 bg-teal-50/30 shadow-sm' :
                                             session.status === 'completed' ? 'border-emerald-200 bg-emerald-50/30' :
                                             session.status === 'cancelled' ? 'border-red-200 bg-red-50/30' :
                                             'border-slate-200 hover:border-teal-300'
                                         }`}
                                     >
+                                        <button
+                                            onClick={() => handleDeleteSession(session.id)}
+                                            className="absolute top-1.5 left-1.5 p-1 rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all"
+                                            title="حذف الجلسة"
+                                        >
+                                            <Trash2 className="h-3.5 w-3.5" />
+                                        </button>
                                         <div className="text-xs text-slate-500 font-medium">اليوم {session.day_number}</div>
 
                                         {editingSessionId === session.id ? (

@@ -21,6 +21,7 @@ import {
     X,
     Download,
     Table2,
+    Trash2,
 } from 'lucide-react';
 import Card from '@/Components/UI/Card';
 import Button from '@/Components/UI/Button';
@@ -1300,14 +1301,30 @@ export default function Index({ sessions, halls, trainers, currentDate, viewType
                             </div>
                         )}
 
-                        <Button
-                            variant="secondary"
-                            className="w-full"
-                            onClick={() => router.visit(route('groups.show', selectedSession.program_group.id))}
-                        >
-                            <Eye className="h-4 w-4 ml-2" />
-                            عرض المجموعة
-                        </Button>
+                        <div className="flex gap-3">
+                            <Button
+                                variant="secondary"
+                                className="flex-1"
+                                onClick={() => router.visit(route('groups.show', selectedSession.program_group.id))}
+                            >
+                                <Eye className="h-4 w-4 ml-2" />
+                                عرض المجموعة
+                            </Button>
+                            <Button
+                                variant="danger"
+                                onClick={() => {
+                                    if (!confirm('هل أنت متأكد من حذف هذه الجلسة؟')) return;
+                                    router.delete(route('sessions.destroy', selectedSession.id), {
+                                        preserveState: true,
+                                        preserveScroll: true,
+                                        onSuccess: () => setSelectedSession(null),
+                                    });
+                                }}
+                            >
+                                <Trash2 className="h-4 w-4 ml-2" />
+                                حذف
+                            </Button>
+                        </div>
                     </div>
                 )}
             </Modal>
