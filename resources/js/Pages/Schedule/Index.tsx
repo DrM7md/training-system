@@ -927,15 +927,15 @@ export default function Index({ sessions, halls, trainers, currentDate, viewType
                             ) : (
                                 /* ===== GRID VIEW: Days as rows, Halls as columns ===== */
                                 <Card padding="none">
-                                    <div className="overflow-x-auto">
+                                    <div className="overflow-x-auto scrollbar-visible">
                                         <table className="w-full" style={{ minWidth: `${160 + halls.length * 150}px` }}>
-                                            <thead>
+                                            <thead className="sticky top-0 z-20">
                                                 <tr>
-                                                    <th className="p-3 text-right text-xs font-bold text-slate-500 uppercase tracking-wider bg-slate-50 sticky right-0 z-10 min-w-[160px] border-b border-l border-slate-200">
+                                                    <th className="p-3 text-right text-xs font-bold text-slate-500 uppercase tracking-wider bg-slate-50 sticky right-0 z-30 min-w-[140px] border-b border-l border-slate-200">
                                                         اليوم
                                                     </th>
                                                     {halls.map((hall) => (
-                                                        <th key={hall.id} className="p-3 text-center min-w-[150px] border-b border-slate-200 bg-slate-50">
+                                                        <th key={hall.id} className="p-3 text-center min-w-[140px] border-b border-slate-200 bg-slate-50">
                                                             <div className="flex flex-col items-center gap-0.5">
                                                                 <Building2 className="h-4 w-4 text-slate-400" />
                                                                 <span className="text-sm font-bold text-slate-600">{hall.name}</span>
@@ -961,15 +961,15 @@ export default function Index({ sessions, halls, trainers, currentDate, viewType
                                                                 isFriday && !holiday && 'bg-emerald-50/20',
                                                             )}
                                                         >
-                                                            <td className="p-3 bg-white sticky right-0 z-10 border-l border-slate-100">
+                                                            <td className="p-2.5 bg-white sticky right-0 z-10 border-l border-slate-100 min-w-[140px]">
                                                                 <div className="flex items-center gap-2">
                                                                     <span className={clsx(
-                                                                        'inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold',
+                                                                        'inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold shrink-0',
                                                                         isToday ? 'bg-teal-500 text-white' : 'text-slate-700'
                                                                     )}>
                                                                         {day}
                                                                     </span>
-                                                                    <div>
+                                                                    <div className="min-w-0">
                                                                         <span className={clsx(
                                                                             'text-sm font-semibold block',
                                                                             isToday ? 'text-teal-700' : isFriday ? 'text-emerald-600' : 'text-slate-600'
@@ -981,7 +981,7 @@ export default function Index({ sessions, halls, trainers, currentDate, viewType
                                                                         </span>
                                                                         {holiday && (
                                                                             <span
-                                                                                className="text-[10px] font-bold text-white px-1.5 py-0.5 rounded"
+                                                                                className="block text-[9px] font-bold text-white px-1.5 py-0.5 rounded mt-0.5 truncate"
                                                                                 style={{ backgroundColor: holiday.color || '#ef4444' }}
                                                                             >
                                                                                 {holiday.name}
@@ -998,7 +998,7 @@ export default function Index({ sessions, halls, trainers, currentDate, viewType
                                                                     <td
                                                                         key={hall.id}
                                                                         className={clsx(
-                                                                            'p-1.5 align-top',
+                                                                            'p-1.5 align-top min-h-[48px] group/cell relative',
                                                                             dragSessionId && !holiday && 'hover:bg-blue-50',
                                                                         )}
                                                                         onDragOver={!holiday ? handleDragOver : undefined}
@@ -1028,6 +1028,13 @@ export default function Index({ sessions, halls, trainers, currentDate, viewType
                                                                                     </div>
                                                                                 ))}
                                                                             </div>
+                                                                        ) : !holiday ? (
+                                                                            <button
+                                                                                onClick={() => openAssignModal(dayStr)}
+                                                                                className="w-full h-full min-h-[40px] flex items-center justify-center opacity-0 group-hover/cell:opacity-100 transition-opacity"
+                                                                            >
+                                                                                <Plus className="h-4 w-4 text-slate-300 hover:text-teal-500 transition-colors" />
+                                                                            </button>
                                                                         ) : null}
                                                                     </td>
                                                                 );
