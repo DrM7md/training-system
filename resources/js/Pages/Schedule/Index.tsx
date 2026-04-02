@@ -360,7 +360,8 @@ export default function Index({ sessions, halls, trainers, currentDate, viewType
             date: assignDate,
             group_ids: selectedGroupIds,
         }, {
-            preserveState: false,
+            preserveState: true,
+            preserveScroll: true,
             onSuccess: () => {
                 setAssignDate(null);
             },
@@ -378,7 +379,7 @@ export default function Index({ sessions, halls, trainers, currentDate, viewType
         router.patch(route('schedule.sessions.update', selectedSession.id), {
             date: editDateValue,
         }, {
-            preserveState: false,
+            preserveState: true, preserveScroll: true,
             onSuccess: () => {
                 setEditingDate(false);
                 setSelectedSession(null);
@@ -391,7 +392,7 @@ export default function Index({ sessions, halls, trainers, currentDate, viewType
         router.patch(route('schedule.sessions.update', selectedSession.id), {
             training_hall_id: editHallValue,
         }, {
-            preserveState: false,
+            preserveState: true, preserveScroll: true,
             onSuccess: () => {
                 setEditingHall(false);
                 setSelectedSession(null);
@@ -404,7 +405,7 @@ export default function Index({ sessions, halls, trainers, currentDate, viewType
         router.patch(route('schedule.sessions.update', selectedSession.id), {
             trainer_id: editTrainerValue || null,
         }, {
-            preserveState: false,
+            preserveState: true, preserveScroll: true,
             onSuccess: () => {
                 setEditingTrainer(false);
                 setSelectedSession(null);
