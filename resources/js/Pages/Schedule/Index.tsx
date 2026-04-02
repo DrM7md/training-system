@@ -943,8 +943,7 @@ export default function Index({ sessions, halls, trainers, currentDate, viewType
                             ) : (
                                 /* ===== GRID VIEW: Days as rows, Halls as columns ===== */
                                 <Card padding="none">
-                                    <div className="scrollbar-visible" style={{ overflowX: 'auto', transform: 'scaleY(-1)' }}>
-                                      <div style={{ transform: 'scaleY(-1)' }}>
+                                    <div className="overflow-auto scrollbar-visible" style={{ maxHeight: 'calc(100vh - 180px)' }}>
                                         <table className="w-full" style={{ minWidth: `${160 + halls.length * 150}px` }}>
                                             <thead className="sticky top-0 z-20">
                                                 <tr>
@@ -1061,7 +1060,6 @@ export default function Index({ sessions, halls, trainers, currentDate, viewType
                                                 })}
                                             </tbody>
                                         </table>
-                                      </div>
                                     </div>
                                 </Card>
                             )}
